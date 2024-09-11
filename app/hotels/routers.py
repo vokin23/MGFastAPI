@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Body
-
+from .schemas import HotelsSchemas
 
 hotels_router = APIRouter(prefix="/hotels")
 
@@ -25,13 +25,12 @@ def get_hotels(
 
 
 @hotels_router.post("/", summary="Создание отеля")
-def create_hotel(
-        title: str = Body(embed=True),
-):
+def create_hotel(hotel_data: HotelsSchemas):
     global hotels
     hotels.append({
         "id": hotels[-1]["id"] + 1,
-        "title": title
+        "title": hotel_data.title,
+        "name": hotel_data.name
     })
     return {"status": "OK"}
 
@@ -44,12 +43,12 @@ def delete_hotel(hotel_id: int):
 
 
 @hotels_router.put("/{hotel_id}", summary="Обновление отеля")
-def put_hotel(hotel_id: int, title: str = Body(), name: str = Body()):
+def put_hotel(hotel_id: int, hotel_dta: HotelsSchemas):
     global hotels
     for hotel in hotels:
         if hotel["id"] == hotel_id:
-            hotel["title"] = title
-            hotel["name"] = name
+            hotel["title"] = hotel_dta.title
+            hotel["name"] = hotel_dta.name
             break
     return {"status": "OK"}
 
