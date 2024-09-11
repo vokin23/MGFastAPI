@@ -18,8 +18,8 @@ hotels = [
 def get_hotels(
         id: int | None = Query(None, description="Айдишник"),
         title: str | None = Query(None, description="Название отеля"),
-        page: int | None = Query(1, description="Номер страницы"),
-        limit: int | None = Query(3, description="Количество записей на странице")
+        page: int | None = Query(1, description="Номер страницы", gt=1),
+        limit: int | None = Query(3, description="Количество записей на странице", gt=1, le=100)
 ):
     global hotels
     hotels_ = []
