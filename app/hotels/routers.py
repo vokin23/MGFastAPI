@@ -23,6 +23,12 @@ def get_hotels(
 ):
     global hotels
     hotels_ = []
+    for hotel in hotels:
+        if id and hotel["id"] != id:
+            continue
+        if title and hotel["title"] != title:
+            continue
+        hotels_.append(hotel)
     if page and limit:
         start = (page - 1) * limit
         end = start + limit
@@ -36,14 +42,7 @@ def get_hotels(
     elif limit:
         hotels_ = hotels[:limit]
         return hotels_
-    else:
-        for hotel in hotels:
-            if id and hotel["id"] != id:
-                continue
-            if title and hotel["title"] != title:
-                continue
-            hotels_.append(hotel)
-        return hotels_
+    return hotels_
 
 
 @hotels_router.post("/", summary="Создание отеля")
