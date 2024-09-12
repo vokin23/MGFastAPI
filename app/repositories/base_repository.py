@@ -23,17 +23,10 @@ class BaseRepository:
         result = await self.session.execute(stmt)
         return result.scalars().one_or_none()
 
-    async def edit(self, data: BaseModel, **filter_by) -> None:
-        stmt = (
-            update(self.model)
-            .where(*[getattr(self.model, key) == value for key, value in filter_by.items()])
-            .values(**data.model_dump())
-        )
+    async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
+        stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=exclude_unset))
         await self.session.execute(stmt)
 
     async def delete_obj(self, **filter_by) -> None:
-        stmt = (
-            delete(self.model)
-            .where(*[getattr(self.model, key) == value for key, value in filter_by.items()])
-        )
+        stmt = delete(self.model).filter_by(**filter_by)
         await self.session.execute(stmt)
