@@ -13,7 +13,7 @@ class HotelsPost(HotelsSchemas):
 
 class HotelsPut(HotelsSchemas):
     title: str
-    name: str
+    location: str
 
 
 class HotelsPatch(HotelsSchemas):
