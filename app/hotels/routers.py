@@ -22,18 +22,18 @@ async def get_hotels(
                                                        offset=offset)
 
 
+@hotels_router.get("/{hotel_id}", summary="Получение отеля по id")
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(id=hotel_id)
+
+
 @hotels_router.post("/", summary="Создание отеля")
 async def create_hotel(hotel_data: HotelsPost):
     async with async_session_maker() as session:
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
     return {"status": "OK", "data": hotel}
-
-
-@hotels_router.get("/{hotel_id}", summary="Получение отеля по id")
-async def get_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).get_one_or_none(id=hotel_id)
 
 
 @hotels_router.put("/{hotel_id}", summary="Редактирование отеля")

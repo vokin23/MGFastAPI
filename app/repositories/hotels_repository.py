@@ -1,11 +1,13 @@
 from sqlalchemy import select, func, insert
 
 from app.hotels.models import HotelsModel
+from app.hotels.schemas import Hotel
 from app.repositories.base_repository import BaseRepository
 
 
 class HotelsRepository(BaseRepository):
     model = HotelsModel
+    schema = Hotel
 
     async def get_all(self, location, title, limit, offset):
         query = select(HotelsModel)
@@ -21,7 +23,7 @@ class HotelsRepository(BaseRepository):
             .offset(offset)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return [self.schema.model_validate(model) for model in result.scalars().all()]
 
     async def add(self, hotel_data):
         add_hotel_stmt = insert(self.model).values(**hotel_data.dict()).returning(self.model)
