@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Body
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, func
 import asyncio
 from app.datebase import async_session_maker
 from app.hotels.models import HotelsModel
@@ -20,17 +20,17 @@ async def get_hotels(
         query = select(HotelsModel)
         if location:
             location = location.lower()
-            query = query.filter(HotelsModel.location.ilike(f"%{location}%"))
+            query = query.filter(func.lower(HotelsModel.location).ilike(f"%{location}%"))
         if title:
             title = title.lower()
-            query = query.filter(HotelsModel.title.ilike(f"%{title}%"))
+            query = query.filter(func.lower(HotelsModel.title).ilike(f"%{title}%"))
         query = (
             query
             .limit(per_page)
             .offset((pagination.page - 1) * per_page)
         )
         result = await session.execute(query)
-        hotels = result.scalar().all()
+        hotels = result.scalars().all()
         return hotels
 
 

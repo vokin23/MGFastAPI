@@ -8,7 +8,7 @@ class HotelsSchemas(BaseModel):
 
 class HotelsPost(HotelsSchemas):
     title: str
-    name: str
+    location: str
 
 
 class HotelsPut(HotelsSchemas):
