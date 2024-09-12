@@ -20,4 +20,4 @@ class BaseRepository:
     async def add_hotel(self, *args, **kwargs):
         stmt = insert(self.model).values(**kwargs).returning(self.model)
         result = await self.session.execute(stmt)
-        return result.fetchone()
+        return result.scalars().one_or_none()

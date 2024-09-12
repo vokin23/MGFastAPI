@@ -30,4 +30,4 @@ async def create_hotel(hotel_data: HotelsPost):
     async with async_session_maker() as session:
         hotel = await HotelsRepository(session).add_hotel(hotel_data)
         await session.commit()
-        return {"data": hotel._asdict() if hasattr(hotel, '_asdict') else dict(hotel)}
+        return {"status": "OK", "data": hotel}
