@@ -22,7 +22,8 @@ async def get_hotels(
             location = location.lower()
             query = query.filter(HotelsModel.location.ilike(f"%{location}%"))
         if title:
-            query = query.filter_by(title=title)
+            title = title.lower()
+            query = query.filter(HotelsModel.title.ilike(f"%{title}%"))
         query = (
             query
             .limit(per_page)
