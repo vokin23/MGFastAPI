@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
-from app.datebase import async_session_maker
-from app.hotels.schemas import HotelsPatch, HotelsPut, HotelsPost
+from app.models.datebase import async_session_maker
+from app.schemas.hotels_schemas import HotelsPatch, HotelsPut, HotelsPost
 from app.pagination import PaginationDep
 from app.repositories.hotels_repository import HotelsRepository
 

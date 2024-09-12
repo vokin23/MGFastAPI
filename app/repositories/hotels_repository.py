@@ -1,7 +1,7 @@
 from sqlalchemy import select, func, insert
 
-from app.hotels.models import HotelsModel
-from app.hotels.schemas import Hotel
+from app.models.hotels_models import HotelsModel, RoomsModel
+from app.schemas.hotels_schemas import Hotel
 from app.repositories.base_repository import BaseRepository
 
 
@@ -30,3 +30,6 @@ class HotelsRepository(BaseRepository):
         result = await self.session.execute(add_hotel_stmt)
         return result.scalars().one_or_none()
 
+
+class RoomsRepository(BaseRepository):
+    model = RoomsModel

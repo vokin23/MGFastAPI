@@ -1,7 +1,7 @@
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.datebase import Base
+from app.models.datebase import Base
 
 
 class HotelsModel(Base):
