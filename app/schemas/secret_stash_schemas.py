@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -18,10 +20,15 @@ class SecretStashCreateSchema(BaseModel):
     is_opened: bool = False
 
 
+class Award(BaseModel):
+    class_name: str
+    value: int
+
+
 class SecretStashOpenSchema(BaseModel):
     steam_id: str
     msg: str
-    awards: list[dict[str, int]]
+    awards: List[Award]
 
 
 class SecretStashCategorySchema(BaseModel):

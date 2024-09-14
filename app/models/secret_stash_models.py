@@ -16,7 +16,7 @@ class Stash(Base):
 
 
 class StashCategory(Base):
-    __tablename__ = 'rooms'
+    __tablename__ = 'stash_category'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(length=255))
