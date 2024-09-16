@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Query, HTTPException
@@ -34,7 +35,11 @@ async def get_player(steam_id: str = Query(..., description="SteamID игрок�
 async def create_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
         async with session() as session:
-            player = Player(steam_id=steam_id)
+            datetime_now = datetime.now()
+            player = Player(steam_id=steam_id,
+                            created_at_player=datetime_now,
+                            created_at_vip=datetime_now,
+                            date_end_vip=datetime_now)
             session.add(player)
             await session.commit()
             return player
@@ -52,7 +57,8 @@ async def get_balance(steam_id: str = Query(description="SteamID игрока"))
 
 
 @player_router.post("/money_withdrawal/", summary="Снятие денег по SteamID и money")
-async def money_withdrawal(steam_id: str = Query(description="SteamID игрока"), money: int = Query(description="Сумма")) -> PlayerGetGameBalanceSchema:
+async def money_withdrawal(steam_id: str = Query(description="SteamID игрока"),
+                           money: int = Query(description="Сумма")) -> PlayerGetGameBalanceSchema:
     async with async_session_maker() as session:
         async with session() as session:
             result = await session.execute(select(Player).where(Player.steam_id == steam_id))
@@ -67,7 +73,8 @@ async def money_withdrawal(steam_id: str = Query(description="SteamID игрок
 
 
 @player_router.post("/replenishment_of_balance/", summary="Пополнение баланса по SteamID и money")
-async def replenishment_of_balance(steam_id: str = Query(description="SteamID игрока"), money: int = Query(description="Сумма")) -> PlayerGetGameBalanceSchema:
+async def replenishment_of_balance(steam_id: str = Query(description="SteamID игрока"),
+                                   money: int = Query(description="Сумма")) -> PlayerGetGameBalanceSchema:
     async with async_session_maker() as session:
         async with session() as session:
             result = await session.execute(select(Player).where(Player.steam_id == steam_id))

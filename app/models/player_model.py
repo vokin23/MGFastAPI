@@ -14,7 +14,7 @@ class Player(Base):
     site_balance: Mapped[int] = mapped_column(default=0)
     vip: Mapped[bool] = mapped_column(default=False)
     vip_lvl: Mapped[int] = mapped_column(default=0)
-    reputation: Mapped[JSON] = mapped_column(JSON)
+    reputation: Mapped[JSON] = mapped_column(JSON, default=dict)
     created_at_player: Mapped[datetime] = mapped_column(DateTime)
     created_at_vip: Mapped[datetime] = mapped_column(DateTime)
     date_end_vip: Mapped[datetime] = mapped_column(DateTime)
