@@ -7,7 +7,7 @@ from sqlalchemy import select, insert
 from app.models.datebase import async_session_maker
 from app.models.secret_stash_models import Stash, StashCategory
 from app.schemas.secret_stash_schemas import SecretStashSchema, SecretStashCreateSchema, SecretStashOpenSchema, \
-    SecretStashCategoryCreate, SecretStashCategorySchema
+    SecretStashCategoryCreate, SecretStashCategorySchema, SecretStashPatch, SecretStashCategoryPatch
 
 stashes_router = APIRouter(prefix="/stashes")
 
@@ -32,6 +32,46 @@ async def create_stash(stash_data: SecretStashCreateSchema) -> SecretStashSchema
         await session.commit()
         new_stash = result.scalar_one()
         return new_stash
+
+
+@stashes_router.put("/put_stash/{stash_id}", summary="Полное обновление Stash'а")
+async def put_stash(stash_id: int, stash_data: SecretStashCategoryCreate) -> SecretStashSchema:
+    async with async_session_maker() as session:
+        stash = await session.execute(select(Stash).where(Stash.id == stash_id))
+        stash = stash.scalar_one_or_none()
+        if stash is None:
+            raise HTTPException(status_code=404, detail="Stash not found")
+        for key, value in stash_data.dict().items():
+            if value is not None:
+                setattr(stash, key, value)
+        await session.commit()
+    return stash
+
+
+@stashes_router.patch("/update_stash/{stash_id}", summary="Обновление информации о Stash'е")
+async def update_stash(stash_data: SecretStashPatch, stash_id: int) -> SecretStashSchema:
+    async with async_session_maker() as session:
+        stash = await session.execute(select(Stash).where(Stash.id == stash_id))
+        stash = stash.scalar_one_or_none()
+        if stash is None:
+            raise HTTPException(status_code=404, detail="Stash not found")
+        for key, value in stash_data.dict().items():
+            if value is not None:
+                setattr(stash, key, value)
+        await session.commit()
+    return stash
+
+
+@stashes_router.delete("/delete_stash/{category_id}", summary="Удаление Stash'а")
+async def delete_stash(stash_id: int) -> SecretStashSchema:
+    async with async_session_maker() as session:
+        stash = await session.execute(select(Stash).where(Stash.id == stash_id))
+        stash = stash.scalar_one_or_none()
+        if stash is None:
+            raise HTTPException(status_code=404, detail="Stash not found")
+        await session.delete(stash)
+        await session.commit()
+    return stash
 
 
 @stashes_router.post("/open", summary="Открытие Stash'а")
@@ -80,3 +120,43 @@ async def get_all_categories() -> List[SecretStashCategorySchema]:
     async with async_session_maker() as session:
         categories = await session.execute(select(StashCategory))
         return categories.scalars().all()
+
+
+@stashes_router.patch("/update_category/{category_id}", summary="Обновление информации о категории Stash'ей")
+async def update_category(category_data: SecretStashCategoryPatch, category_id: int) -> SecretStashCategorySchema:
+    async with async_session_maker() as session:
+        category = await session.execute(select(StashCategory).where(StashCategory.id == category_id))
+        category = category.scalar_one_or_none()
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+        for key, value in category_data.dict().items():
+            if value is not None:
+                setattr(category, key, value)
+        await session.commit()
+    return category
+
+
+@stashes_router.put("/put_category/{category_id}", summary="Полное обновление категории Stash'ей")
+async def put_category(category_id: int, category_data: SecretStashCategoryCreate) -> SecretStashCategorySchema:
+    async with async_session_maker() as session:
+        category = await session.execute(select(StashCategory).where(StashCategory.id == category_id))
+        category = category.scalar_one_or_none()
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+        for key, value in category_data.dict().items():
+            if value is not None:
+                setattr(category, key, value)
+        await session.commit()
+    return category
+
+
+@stashes_router.delete("/delete_category/{category_id}", summary="Удаление категории Stash'ей")
+async def delete_category(category_id: int) -> SecretStashCategorySchema:
+    async with async_session_maker() as session:
+        category = await session.execute(select(StashCategory).where(StashCategory.id == category_id))
+        category = category.scalar_one_or_none()
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+        await session.delete(category)
+        await session.commit()
+    return category

@@ -42,3 +42,17 @@ class SecretStashCategoryCreate(BaseModel):
     name: str
     description: str
     awards_list: list[dict[str, int]]
+
+
+class SecretStashCategoryPatch(BaseModel):
+    name: str | None
+    description: str | None
+    awards_list: list[dict[str, int]] | None
+
+
+class SecretStashPatch(BaseModel):
+    class_name: str | None
+    position: str | None
+    orientation: str | None
+    category_id: int | None
+    is_opened: bool | None
