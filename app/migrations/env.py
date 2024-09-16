@@ -9,6 +9,7 @@ from app.config import settings
 from app.models.datebase import Base
 from app.models.secret_stash_models import Stash, StashCategory
 from app.models.player_model import Player
+from app.models.quest_model import Quest, Operator, Activity, ReputationType, GameNameAnimal, Action
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

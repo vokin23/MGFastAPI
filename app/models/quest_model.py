@@ -59,6 +59,8 @@ class Activity(Base):
 
 
 class Action(Base):
+    __tablename__ = 'action'
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(String(255))
@@ -66,6 +68,8 @@ class Action(Base):
 
 
 class GameNameAnimal(Base):
+    __tablename__ = 'game_name_animal'
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
     class_name: Mapped[str] = mapped_column(String(255))
