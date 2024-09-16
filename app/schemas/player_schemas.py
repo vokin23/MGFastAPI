@@ -11,9 +11,9 @@ class PlayerSchema(BaseModel):
     vip: bool
     vip_lvl: int
     reputation: dict
-    created_at_player: datetime
-    created_at_vip: datetime
-    date_end_vip: datetime
+    created_at_player: str
+    created_at_vip: str
+    date_end_vip: str
 
 
 class PlayerCreateSchema(BaseModel):
@@ -26,8 +26,8 @@ class PlayerUpdateSchema(BaseModel):
     vip: bool
     vip_lvl: int
     reputation: dict
-    created_at_vip: datetime
-    date_end_vip: datetime
+    created_at_vip: str
+    date_end_vip: str
 
 
 class PlayerPatchSchema(BaseModel):
@@ -36,10 +36,10 @@ class PlayerPatchSchema(BaseModel):
     vip: bool | None
     vip_lvl: int | None
     reputation: dict | None
-    created_at_vip: datetime | None
-    date_end_vip: datetime | None
+    created_at_vip: str | None
+    date_end_vip: str | None
 
 
-class PlayerGetGameBalance(BaseModel):
+class PlayerGetGameBalanceSchema(BaseModel):
     steam_id: str
     balance: str
