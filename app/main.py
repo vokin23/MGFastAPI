@@ -2,9 +2,11 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
 
+from app.routers.player_routers import player_router
 from app.routers.secret_stash_routers import stashes_router
 
 main_router = APIRouter(prefix='/v1')
+main_router.include_router(player_router, tags=['Players'])
 main_router.include_router(stashes_router, tags=['Stashes'])
 
 app = FastAPI()
