@@ -7,11 +7,13 @@ class ReputationTypeBase(BaseModel):
     id: int
     name: str
     description: str
+    static: bool
 
 
 class ReputationTypeCreate(BaseModel):
     name: str
     description: str
+    static: bool
 
 
 class ReputationTypePatch(BaseModel):
@@ -110,3 +112,9 @@ class ActivityBase(BaseModel):
 class QuestResponseForPlayer(BaseModel):
     steam_id: int
     quests: List[QuestBase]
+
+
+class QuestCompletionResponse(BaseModel):
+    steam_id: str
+    msg: str
+    award: List[dict]

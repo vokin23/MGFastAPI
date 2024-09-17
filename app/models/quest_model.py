@@ -12,6 +12,7 @@ class ReputationType(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
     description: Mapped[str] = mapped_column(String(255), default="")
+    static: Mapped[bool] = mapped_column(default=False)
 
 
 class Operator(Base):
@@ -22,7 +23,7 @@ class Operator(Base):
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(255), default="")
     class_name: Mapped[str] = mapped_column(String(255), default="")
-    reputation_type: Mapped[str] = mapped_column(ForeignKey(ReputationType.id))
+    reputation_type: Mapped[int] = mapped_column(ForeignKey(ReputationType.id))
     position: Mapped[str] = mapped_column(String(100))
     orientation: Mapped[str] = mapped_column(String(100))
     clothes: Mapped[JSON] = mapped_column(JSON)
@@ -38,8 +39,8 @@ class Quest(Base):
     description: Mapped[str] = mapped_column(String(255))
     awards: Mapped[JSON] = mapped_column(JSON)
     conditions: Mapped[JSON] = mapped_column(JSON, default=dict)
-    required_items: Mapped[JSON] = mapped_column(JSON, default="")
-    operator: Mapped[str] = mapped_column(ForeignKey(Operator.id))
+    required_items: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    operator: Mapped[int] = mapped_column(ForeignKey(Operator.id))
     reputation_need: Mapped[int] = mapped_column(default=0)
     reputation_add: Mapped[int] = mapped_column(default=0)
     reputation_minus: Mapped[int] = mapped_column(default=0)
@@ -50,7 +51,7 @@ class Activity(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player: Mapped[int] = mapped_column(ForeignKey(Player.id))
-    quest: Mapped[str] = mapped_column(ForeignKey(Quest.id))
+    quest: Mapped[int] = mapped_column(ForeignKey(Quest.id))
     conditions: Mapped[JSON] = mapped_column(JSON, default=dict)
     is_active: Mapped[bool] = mapped_column(default=False)
     is_completed: Mapped[bool] = mapped_column(default=False)
@@ -73,3 +74,12 @@ class GameNameAnimal(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
     class_name: Mapped[str] = mapped_column(String(255))
+
+
+class BoostReputationVip(Base):
+    __tablename__ = 'boost_reputation_vip'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String(255), default="Прибавляет к репутации поле boost_value")
+    level: Mapped[int] = mapped_column()
+    boost_value: Mapped[int] = mapped_column(default=0)
