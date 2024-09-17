@@ -151,3 +151,15 @@ class QuestCompletionResponse(BaseModel):
 class ActivityCreate(BaseModel):
     steam_id: str
     msg: str
+
+
+class RepForPDASchema(BaseModel):
+    name: str
+    level: str
+
+
+class PDASchema(BaseModel):
+    steam_id: str
+    activity: List[ActivityBase]
+    reputation: List[RepForPDASchema]
+    vip: int

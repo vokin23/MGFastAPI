@@ -10,7 +10,7 @@ from app.models.player_model import Player
 from app.models.quest_model import ReputationType, Operator, Quest, Activity
 from app.schemas.quest_schemas import ReputationTypeBase, ReputationTypeCreate, ReputationTypePatch, \
     OperatorCreate, OperatorBase, OperatorPatch, QuestBase, QuestCreate, QuestPatch, QuestCompletionResponse, \
-    ActivityBase, ActivityCreate
+    ActivityBase, ActivityCreate, PDASchema
 from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
@@ -156,7 +156,8 @@ async def get_quest_activity_from_player(steam_id: int = Query(description='Stea
         player = player_obj.scalar_one_or_none()
         if player is None:
             raise HTTPException(status_code=404, detail="Player not found")
-        activities = await session.execute(select(Activity).where(Activity.player == player.id, Activity.is_active == True))
+        activities = await session.execute(
+            select(Activity).where(Activity.player == player.id, Activity.is_active == True))
         return activities.scalars().all()
 
 
@@ -233,7 +234,7 @@ async def get_quest_available_to_the_player(steam_id: str = Query(description='S
 
 
 @quest_router.get('/get_info_pda', summary='Получение информации для PDA')
-async def get_info_pda(steam_id: str = Query(description='Steam ID игрока')) -> dict:
+async def get_info_pda(steam_id: str = Query(description='Steam ID игрока')) -> PDASchema:
     async with async_session_maker() as session:
         player = await QuestService.get_player_by_steam_id(session, steam_id)
         activity = await QuestService.get_activity_by_player(session, player)
@@ -251,12 +252,19 @@ async def get_info_pda(steam_id: str = Query(description='Steam ID игрока'
                     )
         if req_conditions_list:
             activity.conditions = req_conditions_list
+        data_reputations = []
+        for reputation, level in player.reputation.items():
+            data_reputations.append(
+                {
+                    "name": reputation,
+                    "level": level
+                }
+            )
 
         response = {
             "steam_id": player.steam_id,
             "activity": activity,
-            "reputation": player.reputation,
-            "vip": player.vip
+            "reputation": data_reputations,
+            "vip": player.vip_lvl
         }
-        return response
-
+        return PDASchema(**response)
