@@ -230,7 +230,7 @@ async def get_quest_available_to_the_player(steam_id: str = Query(description='S
         for quest in quests:
             if quest.id not in activity_quests and quest.id not in activity_quests_lore:
                 response_list.append(quest)
-        return response_list
+        return QuestBase(**response_list)
 
 
 @quest_router.get('/get_info_pda', summary='Получение информации для PDA')
