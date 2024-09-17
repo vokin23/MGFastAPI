@@ -49,7 +49,7 @@ class Activity(Base):
     __tablename__ = 'activity'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player: Mapped[str] = mapped_column(ForeignKey(Player.id))
+    player: Mapped[int] = mapped_column(ForeignKey(Player.id))
     quest: Mapped[str] = mapped_column(ForeignKey(Quest.id))
     conditions: Mapped[JSON] = mapped_column(JSON, default=dict)
     is_active: Mapped[bool] = mapped_column(default=False)
