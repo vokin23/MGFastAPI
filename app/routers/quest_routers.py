@@ -9,6 +9,7 @@ from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.models.quest_model import ReputationType, Operator, Quest, Activity
 from app.schemas.quest_schemas import *
+from app.service.quest_service import *
 
 quest_router = APIRouter(prefix="/quest")
 
@@ -16,7 +17,8 @@ quest_router = APIRouter(prefix="/quest")
 @quest_router.post("/create_reputation_type", summary="Создание вида репутации")
 async def create_reputation_type(reputation_type: ReputationTypeCreate) -> ReputationTypeCreate:
     async with async_session_maker() as session:
-        new_reputation_type = await session.execute(insert(ReputationType).values(**reputation_type.dict()).returning(ReputationType))
+        new_reputation_type = await session.execute(
+            insert(ReputationType).values(**reputation_type.dict()).returning(ReputationType))
         await session.commit()
         return new_reputation_type
 
@@ -30,7 +32,7 @@ async def get_reputation_types() -> List[ReputationTypeBase]:
 
 @quest_router.patch("/update_reputation_type/", summary="Обновление вида репутации")
 async def patch_reputation_type(reputation_type_data: ReputationTypePatch,
-                                 reputation_type_id: int = Query(description='ID типа репктации')) -> ReputationTypeBase:
+                                reputation_type_id: int = Query(description='ID типа репктации')) -> ReputationTypeBase:
     async with async_session_maker() as session:
         reputation_type = select(ReputationType).where(ReputationType.id == reputation_type_id)
         reputation_type = await session.execute(reputation_type)
@@ -74,7 +76,7 @@ async def get_operators() -> List[OperatorBase]:
 
 @quest_router.patch("/update_operator/", summary="Обновление оператора квеста")
 async def patch_operator(operator_data: OperatorPatch,
-                          operator_id: int = Query(description='ID оператора квеста')) -> OperatorBase:
+                         operator_id: int = Query(description='ID оператора квеста')) -> OperatorBase:
     async with async_session_maker() as session:
         operator = select(Operator).where(Operator.id == operator_id)
         operator = await session.execute(operator)
@@ -118,18 +120,18 @@ async def get_quests() -> List[QuestBase]:
 
 @quest_router.patch("/update_quest/", summary="Обновление квеста")
 async def patch_quest(quest_data: QuestPatch,
-                        quest_id: int = Query(description='ID квеста')) -> QuestBase:
-        async with async_session_maker() as session:
-            quest = select(Quest).where(Quest.id == quest_id)
-            quest = await session.execute(quest)
-            quest = quest.scalar_one_or_none()
-            if quest is None:
-                raise HTTPException(status_code=404, detail="Quest not found")
-            for key, value in quest_data.dict().items():
-                if value is not None:
-                    setattr(quest, key, value)
-            await session.commit()
-            return quest
+                      quest_id: int = Query(description='ID квеста')) -> QuestBase:
+    async with async_session_maker() as session:
+        quest = select(Quest).where(Quest.id == quest_id)
+        quest = await session.execute(quest)
+        quest = quest.scalar_one_or_none()
+        if quest is None:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        for key, value in quest_data.dict().items():
+            if value is not None:
+                setattr(quest, key, value)
+        await session.commit()
+        return quest
 
 
 @quest_router.delete("/delete_quest/", summary="Удаление квеста")
@@ -159,23 +161,79 @@ async def get_quest_activity_from_player(steam_id: int = Query(description='Stea
         return result.scalars().all()
 
 
-#TODO: Доделать метод
 @quest_router.get("/get_quest_available_to_the_player", summary="Получение доступных квестов для игрока")
 async def get_quest_available_to_the_player(steam_id: int = Query(description='Steam ID игрока'),
-                                            operator_id: int = Query(description='ID оператора')) -> QuestResponseForPlayer:
+                                            operator_id: int = Query(
+                                                description='ID оператора')) -> QuestResponseForPlayer:
     async with async_session_maker() as session:
-        player = select(Player).where(Player.steam_id == steam_id)
-        player = await session.execute(player)
-        player = player.scalar_one_or_none()
-        if player is None:
-            raise HTTPException(status_code=404, detail="Player not found")
-        operator = select(Operator).where(Operator.id == operator_id)
-        operator = await session.execute(operator)
-        operator = operator.scalar_one_or_none()
-        if operator is None:
-            raise HTTPException(status_code=404, detail="Operator not found")
-        activity_quests = await session.execute(select(Activity).where(Activity.player == player.id,
-                                                                      Activity.is_active == True))
-        activity_quests = activity_quests.scalars().all()
-        activity_quests_lore = [activity.quest for activity in activity_quests if activity.quest.type == 'lore']
+        try:
+            player = await QuestService.get_user_by_steam_id(session, steam_id)
+            reputation = player.reputation
+            activities = await QuestService.get_active_activities_by_user_id(session, player.id)
+            operator = await QuestService.get_operator_by_id(session, operator_id)
+            quests = await QuestService.get_quests_by_operator_id(session, operator.id)
 
+            activity_quests = [act.quest_id for act in activities if act.is_active]
+            activity_quests_lore = [act.quest_id for act in activities if act.quest.type == "lore"]
+
+            data = []
+            for quest in quests:
+                if quest.id not in activity_quests and quest.id not in activity_quests_lore:
+                    if reputation[operator.name] >= quest.reputation_need:
+                        await QuestService.refactor_condition(session, quest)
+                        awards = [{"classname": award, "amount": amount} for award, amount in
+                                  quest.awards.items()]
+                        quest.awards = awards
+                        data.append(quest)
+
+            response_data = {
+                'steam_id': steam_id,
+                'quests': [QuestBase.from_orm(quest) for quest in data]
+            }
+            return QuestResponseForPlayer(**response_data)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
+    @quest_router.post("/completing_the_quest", summary="Завершает активность квеста игрока")
+    async def completing_the_quest(steam_id: int = Query(description='Steam ID игрока'),
+                                   quest_id: int = Query(description='ID квеста')) -> QuestCompletionResponse:
+        async with async_session_maker() as session:
+            try:
+                user = await get_user_by_steam_id(session, steam_id)
+                if user is None:
+                    raise HTTPException(status_code=404, detail="Player not found")
+
+                activity = await get_activity_by_id(session, quest_id)
+                if activity is None:
+                    raise HTTPException(status_code=404, detail="Activity not found")
+
+                quest = activity.quest
+                reputation = await get_reputation_by_user(session, user)
+                if reputation is None:
+                    raise HTTPException(status_code=404, detail="Reputation not found")
+
+                if quest.requiredItems != '':
+                    awards_list = [Award(classname=award, amount=quest.awards[award]) for award in quest.awards.keys()]
+                    response_data = QuestCompletionResponse(
+                        steam_id=user.steam_id,
+                        msg='Квест завершен!',
+                        award=awards_list
+                    )
+                    await update_activity(activity)
+                    await update_reputation(reputation, quest)
+                    await session.commit()
+                    return response_data
+                elif activity.is_completed and 'vip' not in quest.awards and 'money' not in quest.awards:
+                    awards_list = [Award(classname=award, amount=quest.awards[award]) for award in quest.awards.keys()]
+                    response_data = QuestCompletionResponse(
+                        steam_id=user.steam_id,
+                        msg='Квест завершен!',
+                        award=awards_list
+                    )
+                    await update_activity(activity)
+                    await update_reputation(reputation, quest)
+                    await session.commit()
+                    return response_data
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=str(e))
