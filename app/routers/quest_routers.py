@@ -8,19 +8,21 @@ from sqlalchemy import select, insert, update
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.models.quest_model import ReputationType, Operator, Quest, Activity
-from app.schemas.quest_schemas import *
-from app.service.quest_service import *
+from app.schemas.quest_schemas import ReputationTypeBase, ReputationTypeCreate, ReputationTypePatch, \
+    OperatorCreate, OperatorBase, OperatorPatch, QuestBase, QuestCreate, QuestPatch, QuestCompletionResponse, \
+    ActivityBase, ActivityCreate
+from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
 
 
 @quest_router.post("/admin/create_reputation_type", summary="Создание вида репутации")
-async def create_reputation_type(reputation_type: ReputationTypeCreate) -> ReputationTypeCreate:
+async def create_reputation_type(reputation_type: ReputationTypeCreate) -> ReputationTypeBase:
     async with async_session_maker() as session:
         new_reputation_type = await session.execute(
             insert(ReputationType).values(**reputation_type.dict()).returning(ReputationType))
         await session.commit()
-        return new_reputation_type
+        return new_reputation_type.scalar_one()
 
 
 @quest_router.get("/admin/get_reputation_types", summary="Получение видов репутации")
@@ -166,10 +168,95 @@ async def completing_the_quest(steam_id: str = Query(description='Steam ID иг�
         activity = await QuestService.get_activity_by_id(session, activity_id)
         quest = await QuestService.get_quest_by_id(session, activity.quest)
         awards_list = quest.awards
-        await QuestService.update_reputation(session, player, quest, activity)
-        return QuestCompletionResponse(steam_id=steam_id,
-                                       msg=f"Поздравляем с завершением квеста {quest.title}",
-                                       awards=awards_list)
+        if quest.required_items or activity.is_completed:
+            await QuestService.update_reputation(session, player, quest, activity)
+            return QuestCompletionResponse(steam_id=steam_id,
+                                           msg=f"Поздравляем с завершением квеста {quest.title}",
+                                           awards=awards_list)
+        else:
+            raise HTTPException(status_code=400, detail="Quest not completed")
 
 
+@quest_router.post("/update_activity_user", summary="Обновление активности игрока по квестам")
+async def update_activity_user(data: dict) -> ActivityCreate:
+    async with async_session_maker() as session:
+        player = await QuestService.get_player_by_steam_id(session, data['steam_id'])
+        activitys_stmt = await session.execute(select(Activity).where(Activity.player == player.id,
+                                                                      Activity.is_active == True,
+                                                                      Activity.is_completed == False))
+        activitys = activitys_stmt.scalars().all()
+        activity_type = data['activityType']
+        updated_activitys = await QuestService.update_game_activity_player(session, activitys, activity_type)
+        return updated_activitys
+
+
+@quest_router.post("/create_activity", summary="Создание активности игрока по квесту")
+async def create_activity(steam_id: str = Query(description='Steam ID игрока'),
+                          quest_id: int = Query(description='ID квеста')) -> ActivityCreate:
+    async with async_session_maker() as session:
+        player = await QuestService.get_player_by_steam_id(session, steam_id)
+        quest = await QuestService.get_quest_by_id(session, quest_id)
+        if await QuestService.check_player_activity(session, player, quest):
+            return await QuestService.check_player_activity(session, player, quest)
+        insert(Activity).values(player=player.id, quest=quest.id, is_active=True).returning(Activity)
+        response_data = {
+            "steam_id": player.steam_id,
+            "msg": 'Квест принят'
+        }
+        return ActivityCreate(**response_data)
+
+
+@quest_router.get("/get_quest_available_to_the_player", summary="Получение доступных квестов для игрока")
+async def get_quest_available_to_the_player(steam_id: str = Query(description='Steam ID игрока'),
+                                            operator_id: int = Query(description='ID оператора')) -> List[QuestBase]:
+    async with async_session_maker() as session:
+        player = await QuestService.get_player_by_steam_id(session, steam_id)
+        operator = await QuestService.get_operator_by_id(session, operator_id)
+        activity = await QuestService.get_activity_by_player(session, player)
+        quests = await QuestService.get_quests_by_operator(session, operator)
+
+        activity_quests_lore = []
+        activity_quests = []
+        response_list = []
+        for act in activity:
+            quest_id = act.quest
+            quest = await QuestService.get_quest_by_id(session, quest_id)
+            if quest.type == 'lore':
+                activity_quests_lore.append(quest.id)
+            if act.is_active:
+                activity_quests.append(quest.id)
+
+        for quest in quests:
+            if quest.id not in activity_quests and quest.id not in activity_quests_lore:
+                response_list.append(quest)
+        return response_list
+
+
+@quest_router.get('/get_info_pda', summary='Получение информации для PDA')
+async def get_info_pda(steam_id: str = Query(description='Steam ID игрока')) -> dict:
+    async with async_session_maker() as session:
+        player = await QuestService.get_player_by_steam_id(session, steam_id)
+        activity = await QuestService.get_activity_by_player(session, player)
+        req_conditions_list = []
+        for act in activity:
+            quest_id = act.quest
+            quest = await QuestService.get_quest_by_id(session, quest_id)
+            if quest.required_items:
+                for req in quest.required_items:
+                    req_conditions_list.append(
+                        {
+                            "condition_name": req["classname"],
+                            "progress": req["count"]
+                        }
+                    )
+        if req_conditions_list:
+            activity.conditions = req_conditions_list
+
+        response = {
+            "steam_id": player.steam_id,
+            "activity": activity,
+            "reputation": player.reputation,
+            "vip": player.vip
+        }
+        return response
 

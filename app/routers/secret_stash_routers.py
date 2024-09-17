@@ -24,7 +24,7 @@ async def get_all_stashes() -> List[SecretStashSchema]:
         return stash_list
 
 
-@stashes_router.post("/create_stash", summary="Создание нового Stash'а")
+@stashes_router.post("/admin/create_stash", summary="Создание нового Stash'а")
 async def create_stash(stash_data: SecretStashCreateSchema) -> SecretStashSchema:
     async with async_session_maker() as session:
         new_stash_stmt = insert(Stash).values(**stash_data.dict()).returning(Stash)
@@ -34,7 +34,7 @@ async def create_stash(stash_data: SecretStashCreateSchema) -> SecretStashSchema
         return new_stash
 
 
-@stashes_router.put("/put_stash/", summary="Полное обновление Stash'а")
+@stashes_router.put("/admin/put_stash/", summary="Полное обновление Stash'а")
 async def put_stash(stash_data: SecretStashCategoryCreate, stash_id: int = Query(description="ID Stash'а")) -> SecretStashSchema:
     async with async_session_maker() as session:
         stash = await session.execute(select(Stash).where(Stash.id == stash_id))
@@ -48,7 +48,7 @@ async def put_stash(stash_data: SecretStashCategoryCreate, stash_id: int = Query
     return stash
 
 
-@stashes_router.patch("/update_stash/", summary="Обновление информации о Stash'е")
+@stashes_router.patch("/admin/update_stash/", summary="Обновление информации о Stash'е")
 async def update_stash(stash_data: SecretStashPatch, stash_id: int = Query(description="ID Stash'а")) -> SecretStashSchema:
     async with async_session_maker() as session:
         stash = await session.execute(select(Stash).where(Stash.id == stash_id))
@@ -62,7 +62,7 @@ async def update_stash(stash_data: SecretStashPatch, stash_id: int = Query(descr
     return stash
 
 
-@stashes_router.delete("/delete_stash/", summary="Удаление Stash'а")
+@stashes_router.delete("/admin/delete_stash/", summary="Удаление Stash'а")
 async def delete_stash(stash_id: int = Query(description="ID Stash'а")) -> SecretStashSchema:
     async with async_session_maker() as session:
         stash = await session.execute(select(Stash).where(Stash.id == stash_id))
@@ -105,7 +105,7 @@ async def open_stash(stash_id: int = Query(), steam_id: str = Query()) -> Secret
     return SecretStashOpenSchema(**response_data)
 
 
-@stashes_router.post("/crate_category", summary="Создание новой категории Stash'ей")
+@stashes_router.post("/admin/crate_category", summary="Создание новой категории Stash'ей")
 async def create_category(category_data: SecretStashCategoryCreate) -> SecretStashCategorySchema:
     async with async_session_maker() as session:
         new_category_stmt = insert(StashCategory).values(**category_data.dict()).returning(StashCategory)
@@ -115,14 +115,14 @@ async def create_category(category_data: SecretStashCategoryCreate) -> SecretSta
         return new_category
 
 
-@stashes_router.get("/get_categories", summary="Получение списка категорий Stash'ей")
+@stashes_router.get("/admin/get_categories", summary="Получение списка категорий Stash'ей")
 async def get_all_categories() -> List[SecretStashCategorySchema]:
     async with async_session_maker() as session:
         categories = await session.execute(select(StashCategory))
         return categories.scalars().all()
 
 
-@stashes_router.patch("/update_category/", summary="Обновление информации о категории Stash'ей")
+@stashes_router.patch("/admin/update_category/", summary="Обновление информации о категории Stash'ей")
 async def update_category(category_data: SecretStashCategoryPatch,
                           category_id: int = Query(..., description="ID категории")) -> SecretStashCategorySchema:
     async with async_session_maker() as session:
@@ -137,7 +137,7 @@ async def update_category(category_data: SecretStashCategoryPatch,
     return category
 
 
-@stashes_router.put("/put_category/", summary="Полное обновление категории Stash'ей")
+@stashes_router.put("/admin/put_category/", summary="Полное обновление категории Stash'ей")
 async def put_category(category_data: SecretStashCategoryCreate,
                        category_id: int = Query(..., description="ID категории")) -> SecretStashCategorySchema:
     async with async_session_maker() as session:
@@ -152,7 +152,7 @@ async def put_category(category_data: SecretStashCategoryCreate,
     return category
 
 
-@stashes_router.delete("/delete_category/", summary="Удаление категории Stash'ей")
+@stashes_router.delete("/admin/delete_category/", summary="Удаление категории Stash'ей")
 async def delete_category(category_id: int = Query(description='id Категории')) -> SecretStashCategorySchema:
     async with async_session_maker() as session:
         category = await session.execute(select(StashCategory).where(StashCategory.id == category_id))

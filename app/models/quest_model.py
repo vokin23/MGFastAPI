@@ -1,9 +1,21 @@
-from sqlalchemy import String, ForeignKey, JSON, DateTime
+import enum
+
+from sqlalchemy import String, ForeignKey, JSON, DateTime, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
 from app.models.datebase import Base
 from app.models.player_model import Player
+
+
+class AwardAPI(Base):
+    __tablename__ = 'award_api'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    method: Mapped[str] = mapped_column(String(255))
+    type: Mapped[str] = mapped_column(String(255))
+    count: Mapped[int] = mapped_column()
 
 
 class ReputationType(Base):
@@ -29,15 +41,23 @@ class Operator(Base):
     clothes: Mapped[JSON] = mapped_column(JSON)
 
 
+class QuestType(enum.Enum):
+    daily = 'Ежедневный'
+    weekly = 'Еженедельный'
+    monthly = 'Ежемесячный'
+    lore = 'Лорная цепочка'
+
+
 class Quest(Base):
     __tablename__ = 'quest'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), default='quests')
-    type: Mapped[str] = mapped_column(String(10))
+    type: Mapped[QuestType] = mapped_column(Enum(QuestType))
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(String(255))
-    awards: Mapped[JSON] = mapped_column(JSON)
+    awards: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    awards_api: Mapped[int] = mapped_column(ForeignKey(AwardAPI.id), nullable=True)
     conditions: Mapped[JSON] = mapped_column(JSON, default=dict)
     required_items: Mapped[JSON] = mapped_column(JSON, nullable=True)
     operator: Mapped[int] = mapped_column(ForeignKey(Operator.id))

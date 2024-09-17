@@ -3,6 +3,31 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class AwardAPIBaseSchema(BaseModel):
+    id: int
+    method: str
+    type: str
+    name: str
+    count: int
+
+
+class AwardSchema(BaseModel):
+    classname: str
+    count: int
+
+
+class RequiredItemsSchema(BaseModel):
+    classname: str
+    count: int
+
+
+class ConditionSchema(BaseModel):
+    action: str
+    condition_name: str
+    progress: int
+    need: int
+
+
 class ReputationTypeBase(BaseModel):
     id: int
     name: str
@@ -30,7 +55,7 @@ class OperatorBase(BaseModel):
     reputation_type: int
     position: str
     orientation: str
-    clothes: dict
+    clothes: list
 
 
 class OperatorCreate(BaseModel):
@@ -61,9 +86,10 @@ class QuestBase(BaseModel):
     type: str
     title: str
     description: str
-    awards: dict
-    conditions: dict
-    required_items: dict
+    awards: List[AwardSchema] | None
+    awards_api: List[AwardAPIBaseSchema] | None
+    conditions: List[ConditionSchema]
+    required_items: List[RequiredItemsSchema] | None
     operator: int
     reputation_need: int
     reputation_add: int
@@ -75,9 +101,10 @@ class QuestCreate(BaseModel):
     type: str
     title: str
     description: str
-    awards: dict
-    conditions: dict
-    required_items: dict
+    awards: List[AwardSchema] | None
+    awards_api: List[AwardAPIBaseSchema] | None
+    conditions: List[ConditionSchema]
+    required_items: List[RequiredItemsSchema] | None
     operator: int
     reputation_need: int
     reputation_add: int
@@ -89,9 +116,10 @@ class QuestPatch(BaseModel):
     type: str | None
     title: str | None
     description: str | None
-    awards: dict | None
-    conditions: dict | None
-    required_items: dict | None
+    awards: List[AwardSchema] | None
+    awards_api: List[AwardAPIBaseSchema] | None
+    conditions: List[ConditionSchema] | None
+    required_items: List[RequiredItemsSchema] | None
     operator: int | None
     reputation_need: int | None
     reputation_add: int | None
@@ -102,7 +130,7 @@ class ActivityBase(BaseModel):
     id: int
     player: int
     quest: int
-    conditions: dict
+    conditions: List[ConditionSchema]
     is_active: bool
     is_completed: bool
     award_take: bool
@@ -117,4 +145,9 @@ class QuestResponseForPlayer(BaseModel):
 class QuestCompletionResponse(BaseModel):
     steam_id: str
     msg: str
-    award: List[dict]
+    award: List[AwardSchema]
+
+
+class ActivityCreate(BaseModel):
+    steam_id: str
+    msg: str
