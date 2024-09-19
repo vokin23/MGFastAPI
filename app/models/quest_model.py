@@ -67,10 +67,10 @@ class Activity(Base):
     player_id: Mapped[int] = mapped_column(ForeignKey(Player.id))
     quest_id: Mapped[int] = mapped_column(ForeignKey(Quest.id))
     conditions: Mapped[JSON] = mapped_column(JSON, default=dict)
-    is_active: Mapped[bool] = mapped_column(default=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
     is_completed: Mapped[bool] = mapped_column(default=False)
     award_take: Mapped[bool] = mapped_column(default=False)
-    changed_at: Mapped[datetime] = mapped_column(DateTime)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     player = relationship('Player', backref="player_activities")
     quest = relationship('Quest', backref='activities')
 
