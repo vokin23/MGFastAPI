@@ -224,8 +224,11 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
         # Проверяем, что у игрока не более 6 активных квестов
         len_active_activities_quest = len([activity for activity in activities_player if activity.is_active])
         activities_quest = [activity for activity in activities_player]
+        len_activities_daily_quest = len([activity for activity in activities_player if activity.type == "daily" and activity.is_active])
+        len_activities_weekly_quest = len([activity for activity in activities_player if activity.type == "weekly" and activity.is_active])
+        len_activities_monthly_quest = len([activity for activity in activities_player if activity.type == "monthly" and activity.is_active])
 
-        #TODO: Переделать проверку, добавить листы лорных и тд квестов и проверять по ним.
+        #TODO: Переделать проверку
         if player_reputation < quest.reputation_need:
             request_data["msg"] = f"У вас недостаточно репутации для выполнения квеста!"
             return MSGSchema(**request_data)
