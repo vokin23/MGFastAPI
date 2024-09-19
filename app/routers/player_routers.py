@@ -7,6 +7,7 @@ from sqlalchemy import select, insert
 
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
+from app.models.quest_model import ReputationType
 from app.schemas.player_schemas import PlayerGetGameBalanceSchema, PlayerSchema
 
 player_router = APIRouter(prefix="/player")
@@ -34,13 +35,22 @@ async def get_player(steam_id: str = Query(..., description="SteamID игрок�
 async def create_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
         datetime_now = datetime.now()
-        player = Player(steam_id=steam_id,
-                        created_at_player=datetime_now,
-                        created_at_vip=datetime_now,
-                        date_end_vip=datetime_now)
-        session.add(player)
+        reputations_obj = select(ReputationType)
+        reputations = await session.execute(reputations_obj)
+        list_reputations = reputations.scalars().all()
+        reputation = []
+        for rep in list_reputations:
+            reputation.append({
+                "name": rep.name,
+                "level": 0
+            })
+        player_obj = insert(Player).values(steam_id=steam_id,
+                                           game_balance=10000,
+                                           reputation=reputation,
+                                           created_at_player=datetime_now).returning(Player)
+        player = await session.execute(player_obj)
         await session.commit()
-        return player
+        return player.scalar()
 
 
 @player_router.get("/get_balance/", summary="Получение баланса по SteamID")
