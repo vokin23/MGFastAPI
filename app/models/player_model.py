@@ -16,5 +16,5 @@ class Player(Base):
     vip_lvl: Mapped[int] = mapped_column(default=0)
     reputation: Mapped[JSON] = mapped_column(JSON, default=dict)
     created_at_player: Mapped[datetime] = mapped_column(DateTime)
-    created_at_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    date_end_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    date_end_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)

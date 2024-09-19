@@ -35,18 +35,21 @@ class SecretStashCategorySchema(BaseModel):
     id: int
     name: str
     description: str
+    filling: int
     awards_list: list[dict[str, int]]
 
 
 class SecretStashCategoryCreate(BaseModel):
     name: str
     description: str
+    filling: int
     awards_list: list[dict[str, int]]
 
 
 class SecretStashCategoryPatch(BaseModel):
     name: str | None
     description: str | None
+    filling: int | None
     awards_list: list[dict[str, int]] | None
 
 

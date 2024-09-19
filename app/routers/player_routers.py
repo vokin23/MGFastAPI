@@ -47,7 +47,9 @@ async def create_player(steam_id: str = Query(..., description="SteamID игро
         player_obj = insert(Player).values(steam_id=steam_id,
                                            game_balance=10000,
                                            reputation=reputation,
-                                           created_at_player=datetime_now).returning(Player)
+                                           created_at_player=datetime_now,
+                                           created_at_vip=None,
+                                           date_end_vip=None).returning(Player)
         player = await session.execute(player_obj)
         await session.commit()
         return player.scalar()

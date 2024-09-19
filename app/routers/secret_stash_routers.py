@@ -5,9 +5,11 @@ from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert
 
 from app.models.datebase import async_session_maker
+from app.models.player_model import Player
 from app.models.secret_stash_models import Stash, StashCategory
 from app.schemas.secret_stash_schemas import SecretStashSchema, SecretStashCreateSchema, SecretStashOpenSchema, \
     SecretStashCategoryCreate, SecretStashCategorySchema, SecretStashPatch, SecretStashCategoryPatch
+from app.service.secret_stash_service import SecretStashService
 
 stashes_router = APIRouter(prefix="/stashes")
 admin_router = APIRouter()
@@ -80,29 +82,26 @@ async def open_stash(stash_id: int = Query(), steam_id: str = Query()) -> Secret
     async with async_session_maker() as session:
         stash = await session.execute(select(Stash).where(Stash.id == stash_id))
         stash = stash.scalar_one_or_none()
+        player_obj = await session.execute(select(Player).where(Player.steam_id == steam_id))
+        player = player_obj.scalar_one_or_none()
         if stash is None:
             raise HTTPException(status_code=404, detail="Stash not found")
         if stash.is_opened:
             return SecretStashOpenSchema(steam_id=steam_id, msg="Похоже, что схрон уже открыли до вас", awards=[])
         else:
-            stash.is_opened = True
-            stmt_category = await session.execute(select(StashCategory).where(StashCategory.id == stash.category_id))
-            category = stmt_category.scalar_one()
-            awards_list = category.awards_list
-            awards = random.choice(awards_list)
-            award_response = []
-            for award in awards.keys():
-                award_response.append({
-                    "class_name": award,
-                    "value": awards[award]
-                })
-
+            if player.vip_lvl == 4:
+                return await SecretStashService.open_stash(session, stash, steam_id)
+            elif player.vip_lvl == 3 and random.randint(0, 100) > 25:
+                return await SecretStashService.open_stash(session, stash, steam_id)
+            elif player.vip_lvl == 2 and random.randint(0, 100) > 50:
+                return await SecretStashService.open_stash(session, stash, steam_id)
+            elif player.vip_lvl in [0, 1] and random.randint(0, 100) > 65:
+                return await SecretStashService.open_stash(session, stash, steam_id)
             response_data = {
                 "steam_id": steam_id,
-                "msg": "Поздравляем! Вы открыли схрон и получили награду",
-                "awards": award_response
+                "msg": "К сожалению, вы не смогли открыть схрон! Попробуйте еще раз!",
+                "awards": []
             }
-        await session.commit()
     return SecretStashOpenSchema(**response_data)
 
 
