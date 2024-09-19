@@ -22,3 +22,4 @@ class StashCategory(Base):
     name: Mapped[str] = mapped_column(String(length=255))
     description: Mapped[str] = mapped_column(String(length=255))
     awards_list: Mapped[JSON] = mapped_column(JSON)
+    filling: Mapped[int] = mapped_column(default=100, nullable=True)
