@@ -84,8 +84,10 @@ async def open_stash(stash_id: int = Query(), steam_id: str = Query()) -> Secret
         stash = stash.scalar_one_or_none()
         player_obj = await session.execute(select(Player).where(Player.steam_id == steam_id))
         player = player_obj.scalar_one_or_none()
+        if player is None:
+            raise HTTPException(status_code=404, detail="Player not found")
         if stash is None:
-            raise HTTPException(status_code=404, detail="Stash not found")
+            return SecretStashOpenSchema(steam_id=steam_id, msg="Похоже, произошла аномалия! Думаю, следует обратиться куда-то выше.", awards=[])
         if stash.is_opened:
             return SecretStashOpenSchema(steam_id=steam_id, msg="Похоже, что схрон уже открыли до вас", awards=[])
         else:
