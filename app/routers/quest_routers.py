@@ -198,52 +198,82 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
         quest_result = await session.execute(quest_obj)
         quest = quest_result.scalar()
 
+        # Получаем оператора
+        operator_obj = select(Operator).where(Operator.id == quest.operator_id)
+        operator_result = await session.execute(operator_obj)
+        operator = operator_result.scalar()
+
+        # Получаем reputation_type
+        reputation_type_obj = select(ReputationType).where(ReputationType.id == operator.reputation_type_id)
+        reputation_type_result = await session.execute(reputation_type_obj)
+        reputation_type = reputation_type_result.scalar()
+
+        player_reputation = None
+        for reputation in player.reputation:
+            if reputation["name"] == reputation_type.name:
+                player_reputation = reputation["level"]
+                break
+
         # Получаем все активности игрока
         activities_player_obj = select(Activity).where(Activity.player_id == player.id)
         activities_player_result = await session.execute(activities_player_obj)
         activities_player = activities_player_result.scalars().all()
+        if activities_player is None:
+            activities_player = []
 
         # Проверяем, что у игрока не более 6 активных квестов
         len_active_activities_quest = len([activity for activity in activities_player if activity.is_active])
         activities_quest = [activity for activity in activities_player]
+
+        #TODO: Переделать проверку, добавить листы лорных и тд квестов и проверять по ним.
+        if player_reputation < quest.reputation_need:
+            request_data["msg"] = f"У вас недостаточно репутации для выполнения квеста!"
+            return MSGSchema(**request_data)
         for activity_quest in activities_quest:
-            if activity_quest == quest and activity_quest.is_active:
+            if activity_quest.quest_id == quest.id and activity_quest.is_active:
                 request_data["msg"] = f"Вы уже выполняете этот квест!"
                 return MSGSchema(**request_data)
-            elif activity_quest == quest and activity_quest.type == "lore":
+            elif activity_quest.quest_id == quest.id and activity_quest.type == "lore":
                 request_data["msg"] = f"Вы уже выполнили этот лорный квест!"
                 return MSGSchema(**request_data)
-            elif activity_quest == quest and activity_quest.type == "daily" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
+            elif activity_quest.quest_id == quest.id and activity_quest.type == "daily" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
                     days=1):
                 request_data[
                     "msg"] = f"Вы уже выполнили дневной квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=1)} числа!!"
                 return MSGSchema(**request_data)
-            elif activity_quest == quest and activity_quest.type == "weekly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
+            elif activity_quest.quest_id == quest.id and activity_quest.type == "weekly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
                     days=7):
                 request_data[
                     "msg"] = f"Вы уже выполнили недельный квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=7)} числа!!"
                 return MSGSchema(**request_data)
-            elif activity_quest == quest and activity_quest.type == "monthly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
+            elif activity_quest.quest_id == quest.id and activity_quest.type == "monthly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
                     days=30):
                 request_data[
                     "msg"] = f"Вы уже выполнили месячный квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=30)} числа!!"
                 return MSGSchema(**request_data)
-            elif activity_quest == quest and len_active_activities_quest >= 4:
-                if player.vip_lvl <= 3 and player.reputation[quest.operator.reputation_type.name] < 2000:
+            elif activity_quest.quest_id == quest.id and len_active_activities_quest >= 4:
+                if player.vip_lvl <= 3 and player_reputation < 2000:
                     request_data["msg"] = (f"У вас уже есть 4 активных квеста!\n"
                                            f"Выполните хотя бы один из них, чтобы принять новый или прокачайте репутацию и VIP статус!")
                     return MSGSchema(**request_data)
-                elif player.vip_lvl == 4 and player.reputation[quest.operator.reputation_type.name] < 2000 and len_active_activities_quest >= 5:
+                elif player.vip_lvl == 4 and player_reputation < 2000 and len_active_activities_quest >= 5:
                     request_data["msg"] = (f"У вас уже есть 5 активных квестов!\n"
                                            f"Выполните хотя бы один из них, чтобы принять новый или прокачайте репутацию!")
                     return MSGSchema(**request_data)
-                elif player.vip_lvl == 4 and player.reputation[quest.operator.reputation_type.name] >= 2000 and len_active_activities_quest >= 6:
+                elif player.vip_lvl == 4 and player_reputation >= 2000 and len_active_activities_quest >= 6:
                     request_data["msg"] = (f"У вас уже есть 6 активных квестов!\n"
                                            f"Выполните хотя бы один из них, чтобы принять новый!")
                     return MSGSchema(**request_data)
 
-        new_activity = Activity(player_id=player.id, quest_id=quest.id, conditions=quest.conditions)
-        await session.add(new_activity)
+        new_activity = insert(Activity).values(player_id=player.id,
+                                               quest_id=quest.id,
+                                               conditions=quest.conditions,
+                                               is_active=True,
+                                               is_completed=False,
+                                               award_take=False,
+                                               changed_at=datetime.now()).returning(
+            Activity)
+        await session.execute(new_activity)
         await session.commit()
         request_data["msg"] = f"Квест {quest.title} принят!"
         return MSGSchema(**request_data)

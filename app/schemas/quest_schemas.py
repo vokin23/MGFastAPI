@@ -84,17 +84,13 @@ class QuestCreateSchema(BaseModel):
     reputation_minus: int
 
 
+class ActivityCreateSchema(BaseModel):
+    steam_id: str
+    quest_id: int
+
+
 class ActivityBaseSchema(BaseModel):
     id: int
-    player_id: int
-    quest_id: int
-    conditions: List[ConditionSchema]
-    is_active: bool
-    is_completed: bool
-    award_take: bool
-
-
-class ActivityCreateSchema(BaseModel):
     player_id: int
     quest_id: int
     conditions: List[ConditionSchema]
