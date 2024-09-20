@@ -224,11 +224,11 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
         # Проверяем, что у игрока не более 6 активных квестов
         len_active_activities_quest = len([activity for activity in activities_player if activity.is_active])
         activities_quest = [activity for activity in activities_player]
-        len_activities_daily_quest = len([activity for activity in activities_player if activity.type == "daily" and activity.is_active])
-        len_activities_weekly_quest = len([activity for activity in activities_player if activity.type == "weekly" and activity.is_active])
-        len_activities_monthly_quest = len([activity for activity in activities_player if activity.type == "monthly" and activity.is_active])
+        len_activities_daily_quest = len([activity for activity in activities_player_result if (activity.quest).scalar().type == "daily" and activity.is_active])
+        len_activities_weekly_quest = len([activity for activity in activities_player_result if (activity.quest).scalar().type == "weekly" and activity.is_active])
+        len_activities_monthly_quest = len([activity for activity in activities_player_result if activity.quest.type == "monthly" and activity.is_active])
 
-        #TODO: Переделать проверку
+        #TODO: Переделать проверку на не лорные квесты
         if player_reputation < quest.reputation_need:
             request_data["msg"] = f"У вас недостаточно репутации для выполнения квеста!"
             return MSGSchema(**request_data)
@@ -254,7 +254,7 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
                 request_data[
                     "msg"] = f"Вы уже выполнили месячный квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=30)} числа!!"
                 return MSGSchema(**request_data)
-            elif activity_quest.quest_id == quest.id and len_active_activities_quest >= 4:
+            elif len_active_activities_quest >= 4:
                 if player.vip_lvl <= 3 and player_reputation < 2000:
                     request_data["msg"] = (f"У вас уже есть 4 активных квеста!\n"
                                            f"Выполните хотя бы один из них, чтобы принять новый или прокачайте репутацию и VIP статус!")

@@ -30,7 +30,7 @@ class PlayerUpdateSchema(BaseModel):
     site_balance: int
     vip: bool
     vip_lvl: int
-    reputation: List[ReputationSchema]
+    reputation: List[ReputationSchema] | None
     created_at_vip: str | None
     date_end_vip: str | None
 

@@ -5,10 +5,12 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from app.routers.player_routers import player_router
 from app.routers.quest_routers import quest_router, admin_router as admin_router_quest
 from app.routers.secret_stash_routers import stashes_router, admin_router as admin_router_stashes
+from app.routers.player_routers import admin_router as admin_router_player
 
 main_router = APIRouter(prefix='/v1')
 
 main_admin_router = APIRouter(prefix='/admin', tags=['Admin'])
+main_admin_router.include_router(admin_router_player)
 main_admin_router.include_router(admin_router_quest)
 main_admin_router.include_router(admin_router_stashes)
 
