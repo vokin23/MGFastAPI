@@ -13,14 +13,14 @@ from app.schemas.player_schemas import PlayerGetGameBalanceSchema, PlayerSchema
 player_router = APIRouter(prefix="/player")
 
 
-@player_router.get("/", summary="Получение списка игроков")
+@player_router.get("/get_all_players", summary="Получение списка игроков")
 async def get_all_players() -> List[PlayerSchema]:
     async with async_session_maker() as session:
         result = await session.execute(select(Player))
         return result.scalars().all()
 
 
-@player_router.get("/", summary="Получение информации об игроке")
+@player_router.get("/info_player", summary="Получение информации об игроке")
 async def get_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
         async with session() as s:
