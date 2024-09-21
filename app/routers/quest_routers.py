@@ -282,6 +282,7 @@ async def get_info_pda(steam_id: str = Query(description='SteamID игрока')
     async with async_session_maker() as session:
         # Получаем игрока по steam_id
         player = await QuestService.get_player_by_steam_id(session, steam_id)
+
         # Получаем активные активности игрока
         player_activities = await QuestService.get_active_activities(session, player.id)
         # Convert activities to ActivityBaseSchema
@@ -302,70 +303,36 @@ async def get_info_pda(steam_id: str = Query(description='SteamID игрока')
 async def update_activity_player(data: dict) -> MSGSchema:
     async with async_session_maker() as session:
         player = await QuestService.get_player_by_steam_id(session, data.get('Player').get('steamID'))
-        active_activities = await QuestService.get_active_activities(session, player.id)
-        activity_type = data.get("activityType")
+        active_activities = await QuestService.get_active_activities_not_complete(session, player.id)
+
         response_data = {
             "steam_id": player.steam_id,
             "msg": ""
         }
 
+        activity_type = data.get("activityType")
+
         if activity_type in ["MG_Activity_ZombieKillHandler", "MG_Activity_AnimalKillHandler"]:
-            game_name_animal_class_name = data.get("ZombieData").get(
-                "typeName") if activity_type == "MG_Activity_ZombieKillHandler" else data.get("AnimalData").get(
-                "typeName")
-            game_name_animal_obj = select(GameNameAnimal).where(
-                GameNameAnimal.class_name == game_name_animal_class_name)
-            game_name_animal_result = await session.execute(game_name_animal_obj)
-            game_name_animal = game_name_animal_result.scalar()
-            if not game_name_animal:
-                game_name_animal_obj = insert(GameNameAnimal).values(name='', class_name=game_name_animal_class_name)
-                await session.execute(game_name_animal_obj)
-                await session.commit()
-            for active_activity in active_activities:
-                check_completed = False
-                for condition in active_activity.conditions:
-                    if game_name_animal_class_name == condition.condition_name:
-                        condition.progress = str(int(condition.progress) + 1)
-                        if int(condition.progress) >= int(condition.need):
-                            check_completed = True
-                active_activity.is_completed = check_completed  # Обновляем атрибут объекта напрямую
-                await session.merge(active_activity)  # SQLAlchemy сама выполнит UPDATE запрос
-            await session.commit()  # Commit after all activities are updated
-            for active_activity in active_activities:
-                if active_activity.is_completed:
-                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
-                    return MSGSchema(**response_data)
+            await QuestService.update_activity_by_kill_animal(session, data, activity_type, active_activities)
 
         elif activity_type in ["ActionOpenStashCase", "ActionSkinning"]:
-            for active_activity in active_activities:
-                check_completed = True
-                for condition in active_activity.conditions:
-                    if activity_type == condition.get("condition_name"):
-                        condition["progress"] = str(int(condition.get("progress")) + 1)
-                        if int(condition.get("progress")) > int(condition.get("need")):
-                            check_completed = False
-                active_activity.is_completed = check_completed
-                session.add(active_activity)  # Add the modified activity back to the session
-            await session.commit()  # Commit after all activities are updated
-            for active_activity in active_activities:
-                if active_activity.is_completed:
-                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
-                    return MSGSchema(**response_data)
+            await QuestService.update_activity_by_stash_or_skinning(activity_type, active_activities)
 
         elif activity_type == "DistanceActivity":
-            for active_activity in active_activities:
-                check_completed = True
-                for condition in active_activity.conditions:
-                    if activity_type == condition.get("condition_name"):
-                        condition["progress"] = str(int(condition.get("progress")) + int(data['distance']))
-                        if int(condition.get("progress")) > int(condition.get("need")):
-                            check_completed = False
-                active_activity.is_completed = check_completed
-                session.add(active_activity)  # Add the modified activity back to the session
-            await session.commit()  # Commit after all activities are updated
-            for active_activity in active_activities:
-                if active_activity.is_completed:
-                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
-                    return MSGSchema(**response_data)
+            await QuestService.update_activity_by_distance(active_activities, data['distance'])
+
+        await session.commit()
+
+        # Проверяем, есть ли выполненные квесты после обновления
+        for active_activity in active_activities:
+            if active_activity.is_completed:
+                quest_title_obj = await session.execute(select(Quest).where(Quest.id == active_activity.quest_id))
+                quest_title = quest_title_obj.scalar().title
+                response_data["msg"] = f"Квест {quest_title} выполнен!"
+                return MSGSchema(**response_data)
 
         return MSGSchema(**response_data)
+
+
+
+

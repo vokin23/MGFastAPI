@@ -99,7 +99,6 @@ class ActivityBaseSchema(BaseModel):
     award_take: bool
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
