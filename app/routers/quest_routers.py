@@ -10,6 +10,7 @@ from app.models.player_model import Player
 from app.models.quest_model import ReputationType, Operator, Quest, Activity
 from app.schemas.quest_schemas import ReputationTypeCreateSchema, ReputationTypeBaseSchema, OperatorCreateSchema, \
     OperatorBaseSchema, QuestBaseSchema, QuestCreateSchema, MSGSchema
+from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
 admin_router = APIRouter()
@@ -214,59 +215,7 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
                 player_reputation = reputation["level"]
                 break
 
-        # Получаем все активности игрока
-        activities_player_obj = select(Activity).where(Activity.player_id == player.id)
-        activities_player_result = await session.execute(activities_player_obj)
-        activities_player = activities_player_result.scalars().all()
-        if activities_player is None:
-            activities_player = []
-
-        # Проверяем, что у игрока не более 6 активных квестов
-        len_active_activities_quest = len([activity for activity in activities_player if activity.is_active])
-        activities_quest = [activity for activity in activities_player]
-        len_activities_daily_quest = len([activity for activity in activities_player_result if (activity.quest).scalar().type == "daily" and activity.is_active])
-        len_activities_weekly_quest = len([activity for activity in activities_player_result if (activity.quest).scalar().type == "weekly" and activity.is_active])
-        len_activities_monthly_quest = len([activity for activity in activities_player_result if activity.quest.type == "monthly" and activity.is_active])
-
-        #TODO: Переделать проверку на не лорные квесты
-        if player_reputation < quest.reputation_need:
-            request_data["msg"] = f"У вас недостаточно репутации для выполнения квеста!"
-            return MSGSchema(**request_data)
-        for activity_quest in activities_quest:
-            if activity_quest.quest_id == quest.id and activity_quest.is_active:
-                request_data["msg"] = f"Вы уже выполняете этот квест!"
-                return MSGSchema(**request_data)
-            elif activity_quest.quest_id == quest.id and activity_quest.type == "lore":
-                request_data["msg"] = f"Вы уже выполнили этот лорный квест!"
-                return MSGSchema(**request_data)
-            elif activity_quest.quest_id == quest.id and activity_quest.type == "daily" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
-                    days=1):
-                request_data[
-                    "msg"] = f"Вы уже выполнили дневной квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=1)} числа!!"
-                return MSGSchema(**request_data)
-            elif activity_quest.quest_id == quest.id and activity_quest.type == "weekly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
-                    days=7):
-                request_data[
-                    "msg"] = f"Вы уже выполнили недельный квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=7)} числа!!"
-                return MSGSchema(**request_data)
-            elif activity_quest.quest_id == quest.id and activity_quest.type == "monthly" and activity_quest.changed_at.date() >= datetime.now().date() - timedelta(
-                    days=30):
-                request_data[
-                    "msg"] = f"Вы уже выполнили месячный квест!\nПопробуйте принять квест {activity_quest.changed_at.date() + timedelta(days=30)} числа!!"
-                return MSGSchema(**request_data)
-            elif len_active_activities_quest >= 4:
-                if player.vip_lvl <= 3 and player_reputation < 2000:
-                    request_data["msg"] = (f"У вас уже есть 4 активных квеста!\n"
-                                           f"Выполните хотя бы один из них, чтобы принять новый или прокачайте репутацию и VIP статус!")
-                    return MSGSchema(**request_data)
-                elif player.vip_lvl == 4 and player_reputation < 2000 and len_active_activities_quest >= 5:
-                    request_data["msg"] = (f"У вас уже есть 5 активных квестов!\n"
-                                           f"Выполните хотя бы один из них, чтобы принять новый или прокачайте репутацию!")
-                    return MSGSchema(**request_data)
-                elif player.vip_lvl == 4 and player_reputation >= 2000 and len_active_activities_quest >= 6:
-                    request_data["msg"] = (f"У вас уже есть 6 активных квестов!\n"
-                                           f"Выполните хотя бы один из них, чтобы принять новый!")
-                    return MSGSchema(**request_data)
+        await QuestService.quest_check(player, quest, session, request_data, player_reputation)
 
         new_activity = insert(Activity).values(player_id=player.id,
                                                quest_id=quest.id,
