@@ -98,7 +98,23 @@ class ActivityBaseSchema(BaseModel):
     is_completed: bool
     award_take: bool
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class MSGSchema(BaseModel):
     steam_id: str
     msg: str
+
+
+class PDAInfoSchema(BaseModel):
+    steam_id: str
+    activities: List[ActivityBaseSchema]
+    reputation: list
+    vip_lvl: str
+
+
+class UpdateActivitySchema(BaseModel):
+    steam_id: str
+    data: dict

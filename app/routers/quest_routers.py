@@ -2,14 +2,16 @@ import random
 from datetime import datetime, timedelta
 from typing import List
 
+import pytz
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert, update
-
+from sqlalchemy.orm import selectinload
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
-from app.models.quest_model import ReputationType, Operator, Quest, Activity
+from app.models.quest_model import ReputationType, Operator, Quest, Activity, QuestType, GameNameAnimal
 from app.schemas.quest_schemas import ReputationTypeCreateSchema, ReputationTypeBaseSchema, OperatorCreateSchema, \
-    OperatorBaseSchema, QuestBaseSchema, QuestCreateSchema, MSGSchema
+    OperatorBaseSchema, QuestBaseSchema, QuestCreateSchema, MSGSchema, PDAInfoSchema, ActivityBaseSchema, \
+    UpdateActivitySchema
 from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
@@ -215,7 +217,9 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
                 player_reputation = reputation["level"]
                 break
 
-        await QuestService.quest_check(player, quest, session, request_data, player_reputation)
+        result = await QuestService.quest_check(player, quest, session, request_data, player_reputation)
+        if result:
+            return result
 
         new_activity = insert(Activity).values(player_id=player.id,
                                                quest_id=quest.id,
@@ -229,3 +233,139 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
         await session.commit()
         request_data["msg"] = f"Квест {quest.title} принят!"
         return MSGSchema(**request_data)
+
+
+@quest_router.get("/get_available_quests", summary="Получение квестов, доступных игроку")
+async def get_available_quests(steam_id: str = Query(description='SteamID игрока'),
+                               operator_id: int = Query(description='ID оператора')) -> List[QuestBaseSchema]:
+    async with async_session_maker() as session:
+        # Получаем игрока по steam_id
+        player = await QuestService.get_player_by_steam_id(session, steam_id)
+
+        # Получаем оператора с квестами
+        operator_obj = select(Operator).options(selectinload(Operator.quests)).where(Operator.id == operator_id)
+        operator_result = await session.execute(operator_obj)
+        operator = operator_result.scalar()
+
+        # Получаем reputation_type
+        reputation_type_obj = select(ReputationType).where(ReputationType.id == operator.reputation_type_id)
+        reputation_type_result = await session.execute(reputation_type_obj)
+        reputation_type = reputation_type_result.scalar()
+
+        # Получаем активности игрока
+        player_activities = await QuestService.get_active_activities(session, player.id)
+
+        # Получаем список id квестов, которые уже выполняются игроком и составляем черный список квестов
+        quests_id = [quest.id for quest in operator.quests]
+        quest_black_list = []
+        for activity in player_activities:
+            if activity.quest_id in quests_id:
+                quest_black_list.append(activity.quest_id)
+
+        # Получаем репутацию игрока
+        player_reputation = None
+        for reputation in player.reputation:
+            if reputation["name"] == reputation_type.name:
+                player_reputation = reputation["level"]
+                break
+
+        # Получаем доступные квесты
+        available_quests = []
+        for quest in operator.quests:
+            if quest.reputation_need <= player_reputation and quest.id not in quest_black_list:
+                available_quests.append(quest)
+        return available_quests
+
+
+@quest_router.get("/get_info_pda", summary="Получение информации для PDA")
+async def get_info_pda(steam_id: str = Query(description='SteamID игрока')) -> PDAInfoSchema:
+    async with async_session_maker() as session:
+        # Получаем игрока по steam_id
+        player = await QuestService.get_player_by_steam_id(session, steam_id)
+        # Получаем активные активности игрока
+        player_activities = await QuestService.get_active_activities(session, player.id)
+        # Convert activities to ActivityBaseSchema
+        activities = [ActivityBaseSchema.from_orm(activity) for activity in player_activities]
+        await QuestService.refactoring_conditions(session, activities)
+        # Получаем репутацию игрока
+        player_reputation = player.reputation
+        responce_data = {
+            "steam_id": steam_id,
+            "activities": activities,
+            "reputation": player_reputation,
+            "vip_lvl": QuestService.get_str_vip_name(player.vip_lvl)
+        }
+        return PDAInfoSchema(**responce_data)
+
+
+@quest_router.post("/update_activity_player", summary="Обновляет активность игрока по квестам")
+async def update_activity_player(data: dict) -> MSGSchema:
+    async with async_session_maker() as session:
+        player = await QuestService.get_player_by_steam_id(session, data.get('Player').get('steamID'))
+        active_activities = await QuestService.get_active_activities(session, player.id)
+        activity_type = data.get("activityType")
+        response_data = {
+            "steam_id": player.steam_id,
+            "msg": ""
+        }
+
+        if activity_type in ["MG_Activity_ZombieKillHandler", "MG_Activity_AnimalKillHandler"]:
+            game_name_animal_class_name = data.get("ZombieData").get(
+                "typeName") if activity_type == "MG_Activity_ZombieKillHandler" else data.get("AnimalData").get(
+                "typeName")
+            game_name_animal_obj = select(GameNameAnimal).where(
+                GameNameAnimal.class_name == game_name_animal_class_name)
+            game_name_animal_result = await session.execute(game_name_animal_obj)
+            game_name_animal = game_name_animal_result.scalar()
+            if not game_name_animal:
+                game_name_animal_obj = insert(GameNameAnimal).values(name='', class_name=game_name_animal_class_name)
+                await session.execute(game_name_animal_obj)
+                await session.commit()
+            for active_activity in active_activities:
+                check_completed = False
+                for condition in active_activity.conditions:
+                    if game_name_animal_class_name == condition.condition_name:
+                        condition.progress = str(int(condition.progress) + 1)
+                        if int(condition.progress) >= int(condition.need):
+                            check_completed = True
+                active_activity.is_completed = check_completed  # Обновляем атрибут объекта напрямую
+                await session.merge(active_activity)  # SQLAlchemy сама выполнит UPDATE запрос
+            await session.commit()  # Commit after all activities are updated
+            for active_activity in active_activities:
+                if active_activity.is_completed:
+                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
+                    return MSGSchema(**response_data)
+
+        elif activity_type in ["ActionOpenStashCase", "ActionSkinning"]:
+            for active_activity in active_activities:
+                check_completed = True
+                for condition in active_activity.conditions:
+                    if activity_type == condition.get("condition_name"):
+                        condition["progress"] = str(int(condition.get("progress")) + 1)
+                        if int(condition.get("progress")) > int(condition.get("need")):
+                            check_completed = False
+                active_activity.is_completed = check_completed
+                session.add(active_activity)  # Add the modified activity back to the session
+            await session.commit()  # Commit after all activities are updated
+            for active_activity in active_activities:
+                if active_activity.is_completed:
+                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
+                    return MSGSchema(**response_data)
+
+        elif activity_type == "DistanceActivity":
+            for active_activity in active_activities:
+                check_completed = True
+                for condition in active_activity.conditions:
+                    if activity_type == condition.get("condition_name"):
+                        condition["progress"] = str(int(condition.get("progress")) + int(data['distance']))
+                        if int(condition.get("progress")) > int(condition.get("need")):
+                            check_completed = False
+                active_activity.is_completed = check_completed
+                session.add(active_activity)  # Add the modified activity back to the session
+            await session.commit()  # Commit after all activities are updated
+            for active_activity in active_activities:
+                if active_activity.is_completed:
+                    response_data["msg"] = f"Квест {await active_activity.quest.title} выполнен!"
+                    return MSGSchema(**response_data)
+
+        return MSGSchema(**response_data)

@@ -24,12 +24,11 @@ async def get_all_players() -> List[PlayerSchema]:
 @admin_router.get("/info_player", summary="Получение информации об игроке")
 async def get_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
-        async with session() as s:
-            result = await s.execute(select(Player).where(Player.steam_id == steam_id))
-            player = result.scalar()
-            if player is None:
-                raise HTTPException(status_code=404, detail="Игрок не найден")
-            return player
+        result = await session.execute(select(Player).where(Player.steam_id == steam_id))
+        player = result.scalar()
+        if player is None:
+            raise HTTPException(status_code=404, detail="Игрок не найден")
+        return player
 
 
 @player_router.post("/", summary="Создание игрока")
