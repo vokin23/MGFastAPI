@@ -11,7 +11,7 @@ from app.models.player_model import Player
 from app.models.quest_model import ReputationType, Operator, Quest, Activity, QuestType, GameNameAnimal
 from app.schemas.quest_schemas import ReputationTypeCreateSchema, ReputationTypeBaseSchema, OperatorCreateSchema, \
     OperatorBaseSchema, QuestBaseSchema, QuestCreateSchema, MSGSchema, PDAInfoSchema, ActivityBaseSchema, \
-    UpdateActivitySchema
+    UpdateActivitySchema, QuestCompleteSchema, QuestCompleteResponseSchema, AwardListSchema
 from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
@@ -221,13 +221,15 @@ async def create_activity(steam_id: str, quest_id: int) -> MSGSchema:
         if result:
             return result
 
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        datetime_now = datetime.now(moscow_tz).date()
         new_activity = insert(Activity).values(player_id=player.id,
                                                quest_id=quest.id,
                                                conditions=quest.conditions,
                                                is_active=True,
                                                is_completed=False,
                                                award_take=False,
-                                               changed_at=datetime.now()).returning(
+                                               changed_at=datetime_now).returning(
             Activity)
         await session.execute(new_activity)
         await session.commit()
@@ -316,10 +318,10 @@ async def update_activity_player(data: dict) -> MSGSchema:
             await QuestService.update_activity_by_kill_animal(session, data, activity_type, active_activities)
 
         elif activity_type in ["ActionOpenStashCase", "ActionSkinning"]:
-            await QuestService.update_activity_by_stash_or_skinning(activity_type, active_activities)
+            await QuestService.update_activity_by_stash_or_skinning(session, activity_type, active_activities)
 
         elif activity_type == "DistanceActivity":
-            await QuestService.update_activity_by_distance(active_activities, data['distance'])
+            await QuestService.update_activity_by_distance(session, active_activities, data['distance'])
 
         await session.commit()
 
@@ -334,5 +336,29 @@ async def update_activity_player(data: dict) -> MSGSchema:
         return MSGSchema(**response_data)
 
 
-
-
+@quest_router.post("/completing_the_quest", summary="Завершает активность квеста игрока.")
+async def completing_the_quest(data: QuestCompleteResponseSchema) -> QuestCompleteSchema:
+    async with async_session_maker() as session:
+        response_data = {
+            "steam_id": data.steam_id,
+            "msg": "",
+            "award": []
+        }
+        activity_obj = await session.execute(select(Activity).where(Activity.id == data.activity_id))
+        activity = activity_obj.scalar()
+        if activity is None:
+            raise HTTPException(status_code=404, detail="Активность не найдена")
+        if activity.is_completed and activity.is_active and not activity.award_take:
+            activity.is_active = False
+            activity.award_take = True
+            moscow_tz = pytz.timezone('Europe/Moscow')
+            datetime_now = datetime.now(moscow_tz).date()
+            activity.changed_at = datetime_now
+            quest_obj = await session.execute(select(Quest).where(Quest.id == activity.quest_id))
+            quest = quest_obj.scalar()
+            response_data["msg"] = f"Квест {quest.title} завершен!"
+            response_data["award"] = [AwardListSchema(**award) for award in quest.awards]
+            await session.commit()
+            return QuestCompleteSchema(**response_data)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid activity state")

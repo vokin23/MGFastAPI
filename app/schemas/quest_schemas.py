@@ -117,3 +117,19 @@ class PDAInfoSchema(BaseModel):
 class UpdateActivitySchema(BaseModel):
     steam_id: str
     data: dict
+
+
+class AwardListSchema(BaseModel):
+    classname: str
+    count: int
+
+
+class QuestCompleteResponseSchema(BaseModel):
+    steam_id: str
+    activity_id: int
+
+
+class QuestCompleteSchema(BaseModel):
+    steam_id: str
+    msg: str
+    award: List[AwardListSchema]

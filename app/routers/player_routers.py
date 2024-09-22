@@ -2,6 +2,7 @@ import random
 from datetime import datetime
 from typing import List
 
+import pytz
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert
 
@@ -34,7 +35,8 @@ async def get_player(steam_id: str = Query(..., description="SteamID игрок�
 @player_router.post("/", summary="Создание игрока")
 async def create_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
-        datetime_now = datetime.now()
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        datetime_now = datetime.now(moscow_tz).date()
         reputations_obj = select(ReputationType)
         reputations = await session.execute(reputations_obj)
         list_reputations = reputations.scalars().all()

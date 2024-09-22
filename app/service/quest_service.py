@@ -163,9 +163,15 @@ class QuestService:
             activity.conditions = new_conditions
 
     @staticmethod
-    async def update_activity_by_distance(active_activities, distance):
+    async def update_activity_by_distance(session, active_activities, distance):
         """Обновляет активность по условиям, связанным с пройденным расстоянием."""
         for active_activity in active_activities:
+            quest_obj = await session.execute(
+                select(Quest).where(Quest.id == active_activity.quest_id)
+            )
+            quest = quest_obj.scalar()
+            if quest.required_items:
+                break
             check_completed = True
             for condition in active_activity.conditions:
                 if condition["condition_name"] == "DistanceActivity":
@@ -195,6 +201,12 @@ class QuestService:
             await session.execute(game_name_animal_obj)
 
         for active_activity in active_activities:
+            quest_obj = await session.execute(
+                select(Quest).where(Quest.id == active_activity.quest_id)
+            )
+            quest = quest_obj.scalar()
+            if quest.required_items:
+                break
             check_completed = False
             for condition in active_activity.conditions:
                 if game_name_animal_class_name == condition["condition_name"]:
@@ -206,10 +218,16 @@ class QuestService:
             flag_modified(active_activity, "conditions")
 
     @staticmethod
-    async def update_activity_by_stash_or_skinning(activity_type, active_activities):
+    async def update_activity_by_stash_or_skinning(session, activity_type, active_activities):
         """Обновляет активность по условиям, связанным со сбором ресурсов."""
 
         for active_activity in active_activities:
+            quest_obj = await session.execute(
+                select(Quest).where(Quest.id == active_activity.quest_id)
+            )
+            quest = quest_obj.scalar()
+            if quest.required_items:
+                break
             check_completed = True
             for condition in active_activity.conditions:
                 if activity_type == condition["condition_name"]:
