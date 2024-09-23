@@ -1,8 +1,4 @@
-import random
-from datetime import datetime
 from typing import List
-
-import pytz
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert
 
@@ -10,7 +6,7 @@ from app.models.auction_model import Product, Category, Bet
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.schemas.auction_schemas import ProductCreateSchema, ProductBaseSchema, CategoryCreateSchema, \
-    CategoryBaseSchema, ProductsAndMsgSchema, BetCreateSchema, MsgSchema
+    CategoryBaseSchema, ProductsAndMsgSchema, BetCreateSchema, MsgSchema, BetBaseSchema
 from app.service.auction_service import AuctionService
 from app.service.base_service import get_moscow_time
 
@@ -144,3 +140,49 @@ async def create_bet(data: BetCreateSchema) -> List[MsgSchema]:
         product.flag = False
         await session.commit()
         return [response_for_player, response_for_owner]
+
+
+@admin_router.get("/get_auction_products", summary="Получение продуктов")
+async def get_auction_products() -> List[ProductBaseSchema]:
+    async with async_session_maker() as session:
+        products_obj = await session.execute(select(Product).where(Product.status == True))
+        products = products_obj.scalars().all()
+        for product in products:
+            product.remaining_time = AuctionService.calculate_remaining_time(time_created=product.time_created,
+                                                                             duration=product.duration)
+            product.remaining_time_int = AuctionService.calculate_remaining_time_int(time_created=product.time_created,
+                                                                                     duration=product.duration)
+            if product.remaining_time_int <= 0:
+                product.status = False
+                last_bet_obj = select(Bet).where(Bet.product == product.id, Bet.returned == False)
+                last_bet = await session.execute(last_bet_obj)
+                last_bet = last_bet.scalar()
+                if last_bet:
+                    player_obj = await session.execute(select(Player).where(Player.id == last_bet.player))
+                    player = player_obj.scalar()
+                    await AuctionService.rewards(player.steam_id, product)
+                    owner_obj = await session.execute(select(Player).where(Player.id == product.player))
+                    owner = owner_obj.scalar()
+                    owner.game_balance += last_bet.price
+                else:
+                    player_obj = await session.execute(select(Player).where(Player.id == product.player))
+                    player = player_obj.scalar()
+                    await AuctionService.rewards(player.steam_id, product)
+        await session.commit()
+        return products
+
+
+@admin_router.get("/get_auction_bets", summary="Получение ставок")
+async def get_auction_bets() -> List[BetBaseSchema]:
+    async with async_session_maker() as session:
+        bets_obj = await session.execute(select(Bet))
+        bets = bets_obj.scalars().all()
+        return bets
+
+
+@admin_router.get("/get_actual_bets", summary="Получение актуальных ставок")
+async def get_actual_bets() -> List[BetBaseSchema]:
+    async with async_session_maker() as session:
+        bets_obj = await session.execute(select(Bet).where(Bet.returned == False))
+        bets = bets_obj.scalars().all()
+        return bets
