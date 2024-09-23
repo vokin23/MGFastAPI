@@ -17,17 +17,15 @@ auction_router = APIRouter(prefix="/auction")
 admin_router = APIRouter()
 
 
-
 @admin_router.post("/create_auction_category", summary="Создание категории продукта")
 async def create_auction_category(data: CategoryCreateSchema) -> CategoryBaseSchema:
     async with async_session_maker() as session:
         new_category = insert(Category).values(
             name=data.name
-        )
+        ).returning(Category)
         category = await session.execute(new_category)
         await session.commit()
         return category.scalar()
-
 
 
 @auction_router.post("/create_product", summary="Создание продукта")
