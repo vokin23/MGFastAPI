@@ -18,7 +18,7 @@ admin_router = APIRouter()
 
 
 
-@admin_router.post("create_auction_category", summary="Создание категории продукта")
+@admin_router.post("/create_auction_category", summary="Создание категории продукта")
 async def create_auction_category(data: CategoryCreateSchema) -> CategoryBaseSchema:
     async with async_session_maker() as session:
         new_category = insert(Category).values(
@@ -30,7 +30,7 @@ async def create_auction_category(data: CategoryCreateSchema) -> CategoryBaseSch
 
 
 
-@auction_router.post("create_product", summary="Создание продукта")
+@auction_router.post("/create_product", summary="Создание продукта")
 async def create_product(data: ProductCreateSchema) -> ProductBaseSchema:
     async with async_session_maker() as session:
         player_obj = await session.execute(select(Player).where(Player.steam_id == data.steam_id))
