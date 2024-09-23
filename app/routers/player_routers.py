@@ -10,6 +10,7 @@ from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.models.quest_model import ReputationType
 from app.schemas.player_schemas import PlayerGetGameBalanceSchema, PlayerSchema, PlayerUpdateSchema
+from app.service.base_service import get_moscow_time
 
 player_router = APIRouter(prefix="/player")
 admin_router = APIRouter()
@@ -35,8 +36,6 @@ async def get_player(steam_id: str = Query(..., description="SteamID игрок�
 @player_router.post("/", summary="Создание игрока")
 async def create_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
-        moscow_tz = pytz.timezone('Europe/Moscow')
-        datetime_now = datetime.now(moscow_tz).date()
         reputations_obj = select(ReputationType)
         reputations = await session.execute(reputations_obj)
         list_reputations = reputations.scalars().all()
@@ -49,7 +48,7 @@ async def create_player(steam_id: str = Query(..., description="SteamID игро
         player_obj = insert(Player).values(steam_id=steam_id,
                                            game_balance=10000,
                                            reputation=reputation,
-                                           created_at_player=datetime_now,
+                                           created_at_player=get_moscow_time(),
                                            created_at_vip=None,
                                            date_end_vip=None).returning(Player)
         player = await session.execute(player_obj)
