@@ -36,6 +36,7 @@ async def get_player(steam_id: str = Query(..., description="SteamID игрок�
 @player_router.post("/", summary="Создание игрока")
 async def create_player(steam_id: str = Query(..., description="SteamID игрока")) -> PlayerSchema:
     async with async_session_maker() as session:
+        datetime_now = get_moscow_time()
         reputations_obj = select(ReputationType)
         reputations = await session.execute(reputations_obj)
         list_reputations = reputations.scalars().all()
@@ -48,7 +49,7 @@ async def create_player(steam_id: str = Query(..., description="SteamID игро
         player_obj = insert(Player).values(steam_id=steam_id,
                                            game_balance=10000,
                                            reputation=reputation,
-                                           created_at_player=get_moscow_time(),
+                                           created_at_player=datetime_now,
                                            created_at_vip=None,
                                            date_end_vip=None).returning(Player)
         player = await session.execute(player_obj)

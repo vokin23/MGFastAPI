@@ -37,6 +37,9 @@ async def create_product(data: ProductCreateSchema) -> ProductBaseSchema:
         player = player_obj.scalar()
         if not player:
             raise HTTPException(status_code=404, detail="Игрок не найден")
+        time_created = get_moscow_time()
+        remaining_time = AuctionService.calculate_remaining_time_int(time_created=time_created, duration=3)
+        remaining_time_int = AuctionService.calculate_remaining_time_int(time_created=time_created, duration=3)
         new_product = insert(Product).values(
             flag=False,
             status=True,
@@ -46,10 +49,10 @@ async def create_product(data: ProductCreateSchema) -> ProductBaseSchema:
             category=data.category,
             player=player.id,
             quantity=data.quantity,
-            time_created=get_moscow_time(),
+            time_created=time_created,
             duration=3,
-            remaining_time=AuctionService.calculate_remaining_time,
-            remaining_time_int=AuctionService.calculate_remaining_time_int,
+            remaining_time=remaining_time,
+            remaining_time_int=remaining_time_int,
             is_attachment=data.is_attachment,
             attachment=data.attachment,
             price=data.price,
