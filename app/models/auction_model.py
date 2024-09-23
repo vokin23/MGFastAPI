@@ -23,6 +23,7 @@ class Product(Base):
     description: Mapped[str] = mapped_column(String(100))
     category: Mapped[int] = mapped_column(ForeignKey('category.id'))
     player: Mapped[int] = mapped_column(ForeignKey('player.id'))
+    steam_id: Mapped[str] = mapped_column(String(100))
     quantity: Mapped[int] = mapped_column()
     time_created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     duration: Mapped[int] = mapped_column(default=3)
