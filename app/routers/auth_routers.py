@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Response, Request
 from starlette.requests import Request
 
-from src.repositories.users import UsersRepository
-from src.database import async_session_maker
-from src.schemas.users import UserRequestAdd, UserAdd
-from src.services.auth import AuthService
+from app.repositories.users_repository import UsersRepository
+from app.models.datebase import async_session_maker
+from app.schemas.users_schemas import UserRequestAdd, UserAdd
+from app.service.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
 
@@ -44,3 +44,11 @@ async def only_auth(
 ):
     access_token = request.cookies.get("access_token") or None
     return access_token
+
+
+@router.post("/logout")
+async def logout_user(
+        response: Response,
+):
+    response.delete_cookie("access_token")
+    return {"status": "OK"}
