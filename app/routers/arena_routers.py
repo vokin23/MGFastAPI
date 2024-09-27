@@ -31,7 +31,7 @@ async def get_arenas() -> List[ArenaBaseSchema]:
         return result.scalars().all()
 
 
-@admin_router.get("/get_arena/{arena_id}", summary="Получение Арены")
+@admin_router.get("/get_arena", summary="Получение Арены")
 async def get_arena(arena_id: int = Query(description='ID Арены')) -> ArenaBaseSchema:
     async with async_session_maker() as session:
         arena = select(Arena).where(Arena.id == arena_id)
@@ -39,7 +39,7 @@ async def get_arena(arena_id: int = Query(description='ID Арены')) -> Arena
         return result.scalar()
 
 
-@admin_router.put("/update_arena/{arena_id}", summary="Обновление Арены")
+@admin_router.put("/update_arena", summary="Обновление Арены")
 async def update_arena(data: ArenaCreateSchema,
                        arena_id: int = Query(description='ID Арены')) -> ArenaBaseSchema:
     async with async_session_maker() as session:
@@ -50,7 +50,7 @@ async def update_arena(data: ArenaCreateSchema,
         return arena_obj.scalar()
 
 
-@admin_router.patch("/patch_arena/{arena_id}", summary="Обновление Арены")
+@admin_router.patch("/patch_arena", summary="Обновление Арены")
 async def patch_arena(data: ArenaCreateSchema,
                       arena_id: int = Query(description='ID Арены')) -> ArenaBaseSchema:
     async with async_session_maker() as session:
@@ -66,7 +66,7 @@ async def patch_arena(data: ArenaCreateSchema,
         return arena_instance
 
 
-@admin_router.delete("/delete_arena/{arena_id}", summary="Удаление Арены")
+@admin_router.delete("/delete_arena", summary="Удаление Арены")
 async def delete_arena(arena_id: int = Query(description='ID Арены')) -> ArenaBaseSchema:
     async with async_session_maker() as session:
         arena = select(Arena).where(Arena.id == arena_id)
@@ -120,15 +120,16 @@ async def register_arena(data: dict) -> List[Union[MatchReturnSchema, MSGArenaSc
         free_arenas = free_arenas.scalars().all()
 
         new_start_matches = []
-        for free_arena in free_arenas:
-            match = arena_queue.pop(0)
-            await session.execute(update(Match).where(Match.id == match).values(arena=free_arena.id, start=True, time_start=get_moscow_time()))
-            await session.commit()
-            new_start_matches.append(MatchReturnSchema(cords_spawn=free_arena.cords_spawn,
-                                                       player1=match.player1,
-                                                       player2=match.player2,
-                                                       cloths_player1=match.old_things_player1,
-                                                       cloths_player2=match.old_things_player2))
+        if free_arenas:
+            for free_arena in free_arenas:
+                match = arena_queue.pop(0)
+                await session.execute(update(Match).where(Match.id == match).values(arena=free_arena.id, start=True, time_start=get_moscow_time()))
+                await session.commit()
+                new_start_matches.append(MatchReturnSchema(cords_spawn=free_arena.cords_spawn,
+                                                           player1=match.player1,
+                                                           player2=match.player2,
+                                                           cloths_player1=match.old_things_player1,
+                                                           cloths_player2=match.old_things_player2))
         return new_start_matches if new_start_matches else [None]
 
 

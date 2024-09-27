@@ -11,7 +11,7 @@ from app.service.auction_service import AuctionService
 from app.service.base_service import get_moscow_time
 
 auction_router = APIRouter(prefix="/auction")
-admin_router = APIRouter()
+admin_router = APIRouter(prefix="/auction")
 
 
 @admin_router.post("/create_auction_category", summary="Создание категории продукта")

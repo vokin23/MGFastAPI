@@ -18,3 +18,6 @@ class Player(Base):
     created_at_player: Mapped[datetime] = mapped_column(DateTime)
     created_at_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     date_end_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    arena_ranking: Mapped[int] = mapped_column(default=0)
+    kills: Mapped[int] = mapped_column(default=0)
+    deaths: Mapped[int] = mapped_column(default=0)
