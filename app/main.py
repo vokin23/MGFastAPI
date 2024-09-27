@@ -2,12 +2,25 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
 
-from app.routers.hotels_routers import hotels_router
-from app.routers.users_routers import users_router
+from app.routers.player_routers import player_router
+from app.routers.quest_routers import quest_router, admin_router as admin_router_quest
+from app.routers.secret_stash_routers import stashes_router, admin_router as admin_router_stashes
+from app.routers.player_routers import admin_router as admin_router_player
+from app.routers.auction_routers import auction_router, admin_router as admin_router_auction
 
 main_router = APIRouter(prefix='/v1')
-main_router.include_router(users_router, tags=['Users'])
-main_router.include_router(hotels_router, tags=['Hotels'])
+
+main_admin_router = APIRouter(prefix='/admin', tags=['Admin'])
+main_admin_router.include_router(admin_router_player)
+main_admin_router.include_router(admin_router_quest)
+main_admin_router.include_router(admin_router_auction)
+main_admin_router.include_router(admin_router_stashes)
+
+main_router.include_router(main_admin_router)
+main_router.include_router(player_router, tags=['Players'])
+main_router.include_router(quest_router, tags=['Quests'])
+main_router.include_router(auction_router, tags=['Auction'])
+main_router.include_router(stashes_router, tags=['Stashes'])
 
 app = FastAPI()
 app.include_router(main_router)
