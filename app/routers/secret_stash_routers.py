@@ -12,7 +12,7 @@ from app.schemas.secret_stash_schemas import SecretStashSchema, SecretStashCreat
 from app.service.secret_stash_service import SecretStashService
 
 stashes_router = APIRouter(prefix="/stashes")
-admin_router = APIRouter()
+admin_router = APIRouter(prefix="/stashes")
 
 
 @stashes_router.get("/get_stashes", summary="Получение списка Stash'ей")

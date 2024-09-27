@@ -13,7 +13,7 @@ from app.schemas.player_schemas import PlayerGetGameBalanceSchema, PlayerSchema,
 from app.service.base_service import get_moscow_time
 
 player_router = APIRouter(prefix="/player")
-admin_router = APIRouter()
+admin_router = APIRouter(prefix="/player")
 
 
 @admin_router.get("/get_all_players", summary="Получение списка игроков")

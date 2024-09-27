@@ -15,7 +15,7 @@ from app.schemas.quest_schemas import ReputationTypeCreateSchema, ReputationType
 from app.service.quest_service import QuestService
 
 quest_router = APIRouter(prefix="/quest")
-admin_router = APIRouter()
+admin_router = APIRouter(prefix="/quest")
 
 
 @admin_router.post("/create_reputation_type", summary="Создание типа репутации")
