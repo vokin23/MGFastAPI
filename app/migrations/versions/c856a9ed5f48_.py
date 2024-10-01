@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 293c980d0c20
+Revision ID: c856a9ed5f48
 Revises: 
-Create Date: 2024-09-19 19:59:52.372617
+Create Date: 2024-10-01 23:08:29.878198
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '293c980d0c20'
+revision: str = 'c856a9ed5f48'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,6 +25,15 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=False),
     sa.Column('request_json', sa.JSON(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('arena',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.String(length=100), nullable=False),
+    sa.Column('cords_spawn', sa.JSON(), nullable=True),
+    sa.Column('cloths', sa.JSON(), nullable=True),
+    sa.Column('free', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('award_api',
@@ -42,6 +51,23 @@ def upgrade() -> None:
     sa.Column('boost_value', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('category',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
+    op.create_table('fraction',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('leader_steam_id', sa.String(length=17), nullable=False),
+    sa.Column('leader_name', sa.String(length=50), nullable=False),
+    sa.Column('logo', sa.String(length=255), nullable=False),
+    sa.Column('additional_ids', sa.JSON(), nullable=False),
+    sa.Column('spawn_pos', sa.JSON(), nullable=False),
+    sa.Column('max_staff', sa.Integer(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('game_name_animal',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
@@ -51,14 +77,25 @@ def upgrade() -> None:
     op.create_table('player',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('steam_id', sa.String(length=17), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('surname', sa.String(length=50), nullable=False),
+    sa.Column('avatar', sa.String(length=255), nullable=False),
+    sa.Column('about', sa.String(length=255), nullable=False),
+    sa.Column('survivor_model', sa.String(length=255), nullable=False),
+    sa.Column('fraction_id', sa.Integer(), nullable=False),
+    sa.Column('prem_slot', sa.Boolean(), nullable=False),
     sa.Column('game_balance', sa.Integer(), nullable=False),
     sa.Column('site_balance', sa.Integer(), nullable=False),
     sa.Column('vip', sa.Boolean(), nullable=False),
     sa.Column('vip_lvl', sa.Integer(), nullable=False),
     sa.Column('reputation', sa.JSON(), nullable=False),
+    sa.Column('exp', sa.JSON(), nullable=False),
     sa.Column('created_at_player', sa.DateTime(), nullable=False),
     sa.Column('created_at_vip', sa.DateTime(), nullable=True),
     sa.Column('date_end_vip', sa.DateTime(), nullable=True),
+    sa.Column('arena_ranking', sa.Integer(), nullable=False),
+    sa.Column('kills', sa.Integer(), nullable=False),
+    sa.Column('deaths', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('steam_id')
     )
@@ -75,6 +112,28 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=False),
     sa.Column('awards_list', sa.JSON(), nullable=False),
+    sa.Column('filling', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('match',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('arena', sa.Integer(), nullable=False),
+    sa.Column('player1', sa.Integer(), nullable=True),
+    sa.Column('old_things_player1', sa.JSON(), nullable=True),
+    sa.Column('old_cords_player1', sa.JSON(), nullable=True),
+    sa.Column('player2', sa.Integer(), nullable=True),
+    sa.Column('old_things_player2', sa.JSON(), nullable=True),
+    sa.Column('old_cords_player2', sa.JSON(), nullable=True),
+    sa.Column('time_created', sa.DateTime(), nullable=False),
+    sa.Column('time_start', sa.DateTime(), nullable=False),
+    sa.Column('time_end', sa.DateTime(), nullable=False),
+    sa.Column('start', sa.Boolean(), nullable=False),
+    sa.Column('finished', sa.Boolean(), nullable=False),
+    sa.Column('winner', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['arena'], ['arena.id'], ),
+    sa.ForeignKeyConstraint(['player1'], ['player.id'], ),
+    sa.ForeignKeyConstraint(['player2'], ['player.id'], ),
+    sa.ForeignKeyConstraint(['winner'], ['player.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('operator',
@@ -89,6 +148,30 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['reputation_type_id'], ['reputation_type.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('product',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('flag', sa.Boolean(), nullable=False),
+    sa.Column('status', sa.Boolean(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('class_name', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.String(length=100), nullable=False),
+    sa.Column('category', sa.Integer(), nullable=False),
+    sa.Column('player', sa.Integer(), nullable=False),
+    sa.Column('steam_id', sa.String(length=100), nullable=False),
+    sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('time_created', sa.DateTime(), nullable=False),
+    sa.Column('duration', sa.Integer(), nullable=False),
+    sa.Column('remaining_time', sa.String(length=40), nullable=False),
+    sa.Column('remaining_time_int', sa.Integer(), nullable=False),
+    sa.Column('is_attachment', sa.Boolean(), nullable=False),
+    sa.Column('attachment', sa.JSON(), nullable=True),
+    sa.Column('price', sa.Integer(), nullable=False),
+    sa.Column('price_step', sa.Integer(), nullable=False),
+    sa.Column('price_sell', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['category'], ['category.id'], ),
+    sa.ForeignKeyConstraint(['player'], ['player.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('stash',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('class_name', sa.String(length=255), nullable=False),
@@ -97,6 +180,17 @@ def upgrade() -> None:
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.Column('is_opened', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['stash_category.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('bet',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('product', sa.Integer(), nullable=False),
+    sa.Column('player', sa.Integer(), nullable=False),
+    sa.Column('price', sa.Integer(), nullable=False),
+    sa.Column('returned', sa.Boolean(), nullable=False),
+    sa.Column('time_created', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['player'], ['player.id'], ),
+    sa.ForeignKeyConstraint(['product'], ['product.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('quest',
@@ -125,7 +219,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_completed', sa.Boolean(), nullable=False),
     sa.Column('award_take', sa.Boolean(), nullable=False),
-    sa.Column('changed_at', sa.DateTime(), nullable=False),
+    sa.Column('changed_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['player_id'], ['player.id'], ),
     sa.ForeignKeyConstraint(['quest_id'], ['quest.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -137,13 +231,19 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('activity')
     op.drop_table('quest')
+    op.drop_table('bet')
     op.drop_table('stash')
+    op.drop_table('product')
     op.drop_table('operator')
+    op.drop_table('match')
     op.drop_table('stash_category')
     op.drop_table('reputation_type')
     op.drop_table('player')
     op.drop_table('game_name_animal')
+    op.drop_table('fraction')
+    op.drop_table('category')
     op.drop_table('boost_reputation_vip')
     op.drop_table('award_api')
+    op.drop_table('arena')
     op.drop_table('action')
     # ### end Alembic commands ###
