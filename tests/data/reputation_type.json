@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Вольный Сталкер",
+    "description": "Репутация вольного сталкера и нейтральный ГП",
+    "static": true
+  },
+  {
+    "name": "Лорная цепочка",
+    "description": "Прогресс в лорной цепочке",
+    "static": true
+  },
+  {
+    "name": "Долг",
+    "description": "Репутация Долга",
+    "static": false
+  },
+  {
+    "name": "Свобода",
+    "description": "Репутация Свободы",
+    "static": false
+  },
+  {
+    "name": "ОКСОП",
+    "description": "Репутация ОКСОПа",
+    "static": false
+  },
+  {
+    "name": "Бандиты",
+    "description": "Рнпутация бандитов",
+    "static": false
+  },
+  {
+    "name": "Наёмники",
+    "description": "Репутация наёмников",
+    "static": false
+  },
+  {
+    "name": "Наука",
+    "description": "Репутация научников",
+    "static": false
+  }
+]
