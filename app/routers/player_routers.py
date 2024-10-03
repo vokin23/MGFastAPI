@@ -64,7 +64,7 @@ async def get_balance(steam_id: str = Query(description="SteamID игрока"))
         player = result.scalar()
         if player is None:
             raise HTTPException(status_code=404, detail="Игрок не найден")
-        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=player.game_balance)
+        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=str(player.game_balance))
 
 
 @player_router.post("/money_withdrawal/", summary="Снятие денег по SteamID и money")
@@ -79,7 +79,7 @@ async def money_withdrawal(steam_id: str = Query(description="SteamID игрок
             raise HTTPException(status_code=400, detail="Недостаточно средств")
         player.game_balance -= money
         await session.commit()
-        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=player.game_balance)
+        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=str(player.game_balance))
 
 
 @player_router.post("/replenishment_of_balance/", summary="Пополнение баланса по SteamID и money")
@@ -92,7 +92,7 @@ async def replenishment_of_balance(steam_id: str = Query(description="SteamID и
             raise HTTPException(status_code=404, detail="Игрок не найден")
         player.game_balance += money
         await session.commit()
-        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=player.game_balance)
+        return PlayerGetGameBalanceSchema(steam_id=player.steam_id, balance=str(player.game_balance))
 
 
 @admin_router.put("/put_player", summary="Обновление информации игрока")

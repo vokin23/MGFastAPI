@@ -1,7 +1,7 @@
 import pytest
-
+from unittest.mock import patch
 from app.config import settings
-from app.models.datebase import Base, engine_null_pool
+from app.models.datebase import Base, engine_null_pool, async_session_maker_null_pool
 from app.main import app
 from app.models import *
 from app.service.base_service import read_json_async
@@ -43,3 +43,15 @@ async def test_register_player(test_register_reputation_type):
                 "/v1/player/",
                 params={"steam_id": steam_id}
             )
+
+
+@pytest.fixture
+def patch_player_async_session_maker():
+    with patch('app.routers.player_routers.async_session_maker', async_session_maker_null_pool):
+        yield
+
+
+@pytest.fixture
+def patch_quest_async_session_maker():
+    with patch('app.routers.quest_routers.async_session_maker', async_session_maker_null_pool):
+        yield

@@ -38,5 +38,20 @@
     "name": "Наука",
     "description": "Репутация научников",
     "static": false
+  },
+  {
+    "name": "Ренеегаты",
+    "description": "Репутация ренегатов",
+    "static": false
+  },
+  {
+    "name": "Грех",
+    "description": "Репутация Греха",
+    "static": false
+  },
+  {
+    "name": "Тест",
+    "description": "Репутация Тест",
+    "static": false
   }
 ]

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -75,9 +75,9 @@ class QuestCreateSchema(BaseModel):
     title: str
     description: str
     awards: List[AwardsSchema]
-    awards_api: int = Field(None, alias="awards_api")
+    awards_api: Union[int, None]
     conditions: List[ConditionSchema]
-    required_items: List[RequiredItemsSchema] = Field(None, alias="required_items")
+    required_items: Union[int, None]
     operator_id: int
     reputation_need: int
     reputation_add: int

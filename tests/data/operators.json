@@ -1,0 +1,42 @@
+[
+  {
+    "name": "string",
+    "description": "string",
+    "class_name": "string",
+    "position": "string",
+    "orientation": "string",
+    "clothes": [
+      "string"
+    ]
+  },
+  {
+    "name": "string",
+    "description": "string",
+    "class_name": "string",
+    "position": "string",
+    "orientation": "string",
+    "clothes": [
+      "string"
+    ]
+  },
+  {
+    "name": "string",
+    "description": "string",
+    "class_name": "string",
+    "position": "string",
+    "orientation": "string",
+    "clothes": [
+      "string"
+    ]
+  },
+  {
+    "name": "string",
+    "description": "string",
+    "class_name": "string",
+    "position": "string",
+    "orientation": "string",
+    "clothes": [
+      "string"
+    ]
+  }
+]
