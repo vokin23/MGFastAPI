@@ -5,6 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN  pip install -r requirements.txt
-RUN docker network create MGNetwork
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
+
+CMD alembic upgrade head; uvicorn app.main:app --host 0.0.0.0
+#CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
