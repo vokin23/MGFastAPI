@@ -4,7 +4,7 @@ from app import settings
 
 celery_instance = Celery(
     "tasks",
-    broker=settings.REDIS_URL,
+    broker=settings.redis_url,
     include=[
         "app.tasks.tasks"
     ]
