@@ -13,6 +13,6 @@ celery_instance = Celery(
 celery_instance.conf.beat_schedule = {
     "vips": {
         "task": "cheek_vips",
-        "schedule": 3600
+        "schedule": 5
     }
 }
