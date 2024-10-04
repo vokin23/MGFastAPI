@@ -12,12 +12,12 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
 
-    REDIS_URL: str
+    REDIS_HOST: str
     REDIS_PORT: int
 
     @property
     def redis_url(self):
-        return f"redis://{self.REDIS_URL}:{self.REDIS_PORT}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     @property
     def db_url(self):
