@@ -1,6 +1,6 @@
 services:
   backend:
-    container_name: 'backend'
+    container_name: 'backend_mg'
     build:
       context: .
     ports:
@@ -12,9 +12,12 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
 
   celery_worker:
-    container_name: 'celery_worker'
+    container_name: 'celery_worker_mg'
     build:
       context: .
     networks:
@@ -25,9 +28,12 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
 
   celery_beat:
-    container_name: 'celery_beat'
+    container_name: 'celery_beat_mg'
     build:
       context: .
     networks:
@@ -38,10 +44,13 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
 
   db:
     image: postgres:16
-    container_name: 'postgres'
+    container_name: 'postgres_mg'
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
@@ -55,7 +64,7 @@ services:
 
   redis:
     image: redis:7.4
-    container_name: 'redis'
+    container_name: 'redis_mg'
     ports:
       - "6379:6379"
     networks:
@@ -63,7 +72,7 @@ services:
 
   nginx:
     image: nginx:latest
-    container_name: 'nginx'
+    container_name: 'nginx_mg'
     ports:
       - "80:80"
     volumes:

@@ -29,6 +29,7 @@ class AuctionService:
             awards['awards'].append(product.attachment)
             async with aiofiles.open(awards_file_dir, 'w', encoding='utf-8') as f:
                 await f.write(json.dumps(awards, ensure_ascii=False, indent=4))
+
     @staticmethod
     def calculate_remaining_time(time_created, duration):
         """
@@ -57,7 +58,7 @@ class AuctionService:
         hours, remainder = divmod(remaining_time.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
 
-        return seconds + minutes*60 + hours*3600 + days*24*3600
+        return seconds + minutes * 60 + hours * 3600 + days * 24 * 3600
 
     @staticmethod
     async def get_player(session, steam_id):

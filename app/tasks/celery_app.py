@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app import settings
 
@@ -13,6 +14,10 @@ celery_instance = Celery(
 celery_instance.conf.beat_schedule = {
     "vips": {
         "task": "cheek_vips",
-        "schedule": 5
+        "schedule": crontab(hour=0, minute=0, timezone='Europe/Moscow')
+    },
+    "player_info": {
+        "task": "update_player_info",
+        "schedule": 20
     }
 }
