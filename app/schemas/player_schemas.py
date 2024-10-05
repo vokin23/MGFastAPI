@@ -17,6 +17,7 @@ class ReputationSchema(BaseModel):
 class PlayerSchema(BaseModel):
     id: int
     steam_id: str
+    discord_name: str | None
     name: str
     surname: str
     avatar: str
@@ -43,6 +44,7 @@ class PlayerCreateSchema(BaseModel):
 
 
 class PlayerUpdateSchema(BaseModel):
+    discord_name: str | None
     name: str
     surname: str
     avatar: str
@@ -64,6 +66,7 @@ class PlayerUpdateSchema(BaseModel):
 
 
 class PlayerPatchSchema(BaseModel):
+    discord_name: str | None
     name: str | None
     surname: str | None
     avatar: str | None

@@ -10,7 +10,7 @@ class Player(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     steam_id: Mapped[str] = mapped_column(String(17), unique=True)
-    discord_name: Mapped[str] = mapped_column(String(50), default='')
+    discord_name: Mapped[str] = mapped_column(String(50), nullable=True, default='')
     name: Mapped[str] = mapped_column(String(50), default='')
     surname: Mapped[str] = mapped_column(String(50), default='')
     avatar: Mapped[str] = mapped_column(String(255), default='')
