@@ -14,7 +14,7 @@ celery_instance = Celery(
 celery_instance.conf.beat_schedule = {
     "vips": {
         "task": "cheek_vips",
-        "schedule": crontab(hour=0, minute=0, timezone='Europe/Moscow')
+        "schedule": crontab(hour=0, minute=0)
     },
     "player_info": {
         "task": "update_player_info",
