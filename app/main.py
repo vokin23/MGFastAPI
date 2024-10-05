@@ -9,6 +9,7 @@ from app.routers.player_routers import admin_router as admin_router_player
 from app.routers.auction_routers import auction_router, admin_router as admin_router_auction
 from app.routers.arena_routers import admin_router as admin_router_arena
 from app.routers.arena_routers import arena_router
+from app.routers.bot_routers import admin_router as admin_router_bot, bot_router
 
 main_router = APIRouter(prefix='/v1')
 
@@ -18,6 +19,7 @@ main_admin_router.include_router(admin_router_quest)
 main_admin_router.include_router(admin_router_auction)
 main_admin_router.include_router(admin_router_stashes)
 main_admin_router.include_router(admin_router_arena)
+main_admin_router.include_router(admin_router_bot)
 
 main_router.include_router(main_admin_router)
 main_router.include_router(player_router, tags=['Players'])
@@ -25,6 +27,7 @@ main_router.include_router(quest_router, tags=['Quests'])
 main_router.include_router(auction_router, tags=['Auction'])
 main_router.include_router(stashes_router, tags=['Stashes'])
 main_router.include_router(arena_router, tags=['Arena'])
+main_router.include_router(bot_router, tags=['Bot'])
 
 app = FastAPI()
 app.include_router(main_router)

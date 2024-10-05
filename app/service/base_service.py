@@ -23,6 +23,11 @@ async def read_json_async(file_path):
         return json.loads(contents)
 
 
+async def write_json_async(file_path, data):
+    async with aiofiles.open(file_path, mode='w', encoding='utf-8') as f:
+        await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+
+
 async def get_vips_player():
     async with async_session_maker_null_pool() as session:
         players_obj = select(Player).filter(Player.vip, func.date(Player.date_end_vip) == get_moscow_time().date())
@@ -55,3 +60,11 @@ async def update_player_info():
             player_db.fraction_id = player['FractionID']
             player_db.survivor_model = player['SurvivorModel']
             await session.commit()
+
+
+async def add_vip_status(steam_id, vip_lvl):
+    file_path = '/app/PlayersDB'
+    async with async_session_maker_null_pool() as session:
+        data_player = await read_json_async(f"{file_path}/{steam_id}.json")
+        data_player['VIP_Lvl'] = vip_lvl
+        await write_json_async(f"{file_path}/{steam_id}.json", data_player)

@@ -1,6 +1,6 @@
 import asyncio
 
-from app.service.base_service import get_vips_player, update_player_info
+from app.service.base_service import get_vips_player, update_player_info, add_vip_status
 from app.tasks.celery_app import celery_instance
 
 
@@ -14,3 +14,9 @@ def cheek_vips_everyday():
 def update_player_info_task():
     asyncio.run(update_player_info())
     print("update_player_info_task успешно завершена!")
+
+
+@celery_instance.task(name="add_vip")
+def add_vip_task(steam_id, vip_lvl):
+    asyncio.run(add_vip_status(steam_id, vip_lvl))
+    print("add_vip_task успешно завершена!")
