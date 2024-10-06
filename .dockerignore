@@ -1,1 +1,7 @@
 venv/
+.env-test
+.env-local
+docker-compose.yml
+Dockerfile
+README.txt
+tests/
