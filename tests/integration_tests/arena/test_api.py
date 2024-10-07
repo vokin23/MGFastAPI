@@ -16,7 +16,7 @@ async def get_players():
         return result.scalars().all()
 
 
-async def test_create_arenas(patch_quest_async_session_maker):
+async def test_create_arenas(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         arenas = await read_json_async("tests/data/arenas.json")
         for arena in arenas:
@@ -30,19 +30,19 @@ async def test_create_arenas(patch_quest_async_session_maker):
             assert response.status_code == 200
 
 
-async def test_get_arenas(patch_quest_async_session_maker):
+async def test_get_arenas(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         response = await ac.get("/v1/admin/arena/get_arenas")
         assert response.status_code == 200
 
 
-async def test_get_arena(patch_quest_async_session_maker):
+async def test_get_arena(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         response = await ac.get("/v1/admin/arena/get_arena?arena_id=1")
         assert response.status_code == 200
 
 
-async def test_update_arena(patch_quest_async_session_maker):
+async def test_update_arena(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         response = await ac.put("/v1/admin/arena/update_arena?arena_id=1", json={
             "name": "test",
@@ -54,7 +54,7 @@ async def test_update_arena(patch_quest_async_session_maker):
         assert response.status_code == 200
 
 
-async def test_patch_arena(patch_quest_async_session_maker):
+async def test_patch_arena(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         response = await ac.patch("/v1/admin/arena/patch_arena?arena_id=1", json={
             "name": "test_patch",
@@ -66,7 +66,7 @@ async def test_patch_arena(patch_quest_async_session_maker):
         assert response.status_code == 200
 
 
-async def test_register_arena(patch_quest_async_session_maker):
+async def test_register_arena(patch_arena_async_session_maker):
     players = await get_players()
     async with AsyncClient(app=app, base_url=base_url) as ac:
         for player in players:
@@ -79,7 +79,7 @@ async def test_register_arena(patch_quest_async_session_maker):
             assert response.status_code == 200
 
 
-async def test_delete_register_arena(patch_quest_async_session_maker):
+async def test_delete_register_arena(patch_arena_async_session_maker):
     players = await get_players()
     player = players[0]
     async with AsyncClient(app=app, base_url=base_url) as ac:
