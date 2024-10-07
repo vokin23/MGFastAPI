@@ -20,7 +20,8 @@ class Match(Base):
     __tablename__ = 'match'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    arena: Mapped[int] = mapped_column(ForeignKey('arena.id'))
+    arena: Mapped[int] = mapped_column(ForeignKey('arena.id'), nullable=True, default=None)
+    arena_set: Mapped[JSON] = mapped_column(JSON, nullable=True, default=None)
     player1: Mapped[int] = mapped_column(ForeignKey('player.id'), nullable=True, default=None)
     old_things_player1: Mapped[JSON] = mapped_column(JSON, nullable=True, default=None)
     old_cords_player1: Mapped[JSON] = mapped_column(JSON, nullable=True, default=None)
@@ -33,3 +34,4 @@ class Match(Base):
     start: Mapped[bool] = mapped_column(default=False)
     finished: Mapped[bool] = mapped_column(default=False)
     winner: Mapped[int] = mapped_column(ForeignKey('player.id'), nullable=True, default=None)
+

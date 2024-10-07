@@ -55,3 +55,9 @@ def patch_player_async_session_maker():
 def patch_quest_async_session_maker():
     with patch('app.routers.quest_routers.async_session_maker', async_session_maker_null_pool):
         yield
+
+
+@pytest.fixture
+def patch_arena_async_session_maker():
+    with patch('app.routers.arena_routers.async_session_maker', async_session_maker_null_pool):
+        yield
