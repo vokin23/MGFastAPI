@@ -6,7 +6,7 @@ from app.models.arena_model import Arena, Match
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGArenaSchema, \
-    ArenaRegPlayerSchema, MatchReturnSchema
+    ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema
 from app.service.arena_service import ArenaService
 from app.service.base_service import get_moscow_time
 
@@ -45,11 +45,20 @@ async def get_arena(arena_id: int = Query(description='ID Арены')) -> Arena
 async def update_arena(data: ArenaCreateSchema,
                        arena_id: int = Query(description='ID Арены')) -> ArenaBaseSchema:
     async with async_session_maker() as session:
-        arena = select(Arena).where(Arena.id == arena_id)
-        arena_obj = await session.execute(arena)
-        arena_obj.scalar().update(data.model_dump())
+        arena_query = select(Arena).where(Arena.id == arena_id)
+        result = await session.execute(arena_query)
+        arena_obj = result.scalar_one_or_none()
+
+        if arena_obj is None:
+            raise HTTPException(status_code=404, detail="Arena not found")
+
+        for key, value in data.dict().items():
+            setattr(arena_obj, key, value)
+
         await session.commit()
-        return arena_obj.scalar()
+        await session.refresh(arena_obj)
+
+        return arena_obj
 
 
 @admin_router.patch("/patch_arena", summary="Обновление Арены")
@@ -136,7 +145,7 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
 
 
 @arena_router.post("/delete_register_arena", summary="Удаление регистрации на Арену")
-async def delete_register_arena(data: ArenaRegPlayerSchema) -> MSGArenaSchema:
+async def delete_register_arena(data: ArenaDeleteRegPlayerSchema) -> MSGArenaSchema:
     async with async_session_maker() as session:
         player_obj = select(Player).where(Player.steam_id == data.steam_id)
         player_stmt = await session.execute(player_obj)
@@ -149,9 +158,21 @@ async def delete_register_arena(data: ArenaRegPlayerSchema) -> MSGArenaSchema:
                                                Match.finished == False)
         player_match_stmt = await session.execute(player_match_obj)
         player_match = player_match_stmt.scalar()
-        if player_match and player_match.id in arena_queue:
-            arena_queue.remove(player_match.id)
-            return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
+        if player_match and not player_match.start:
+            if player_match.player1 == player.id:
+                player_match.player1 = None
+                player_match.old_things_player1 = None
+                if not player_match.player2:
+                    await session.delete(player_match)
+                await session.commit()
+                return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
+            else:
+                player_match.player2 = None
+                player_match.old_things_player2 = None
+                if not player_match.player1:
+                    await session.delete(player_match)
+                await session.commit()
+                return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
 
 
 # TODO: Доработать метод обновления матча и создать вывод информации для КПК

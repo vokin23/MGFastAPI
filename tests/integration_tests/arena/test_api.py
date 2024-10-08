@@ -44,7 +44,7 @@ async def test_get_arena(patch_arena_async_session_maker):
 
 async def test_update_arena(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
-        response = await ac.put("/v1/admin/arena/update_arena?arena_id=1", json={
+        response = await ac.put("/v1/admin/arena/update_arena?arena_id=1", params={"arena_id": 1}, json={
             "name": "test",
             "description": "test",
             "cords_spawn": [],
@@ -56,11 +56,11 @@ async def test_update_arena(patch_arena_async_session_maker):
 
 async def test_patch_arena(patch_arena_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
-        response = await ac.patch("/v1/admin/arena/patch_arena?arena_id=1", json={
+        response = await ac.patch("/v1/admin/arena/patch_arena?arena_id=2", params={"arena_id": 2}, json={
             "name": "test_patch",
             "description": "test_patch",
-            "cords_spawn": ["test_patch"],
-            "cloths": ["test_patch"],
+            "cords_spawn": [],
+            "cloths": [],
             "free": True
         })
         assert response.status_code == 200
@@ -72,7 +72,7 @@ async def test_register_arena(patch_arena_async_session_maker):
         for player in players:
             response = await ac.post("/v1/arena/register_arena", json={
                 "steam_id": player.steam_id,
-                "items": [player.steam_id, player.steam_id, player.steam_id],
+                "items": [{}, {}, {}],
                 "position": player.steam_id,
                 "orientation": player.steam_id
             })
@@ -81,7 +81,7 @@ async def test_register_arena(patch_arena_async_session_maker):
 
 async def test_delete_register_arena(patch_arena_async_session_maker):
     players = await get_players()
-    player = players[0]
+    player = players[14]
     async with AsyncClient(app=app, base_url=base_url) as ac:
         response = await ac.post("/v1/arena/delete_register_arena", json={
             "steam_id": player.steam_id

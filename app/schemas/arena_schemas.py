@@ -27,6 +27,10 @@ class ArenaRegPlayerSchema(BaseModel):
     orientation: str
 
 
+class ArenaDeleteRegPlayerSchema(BaseModel):
+    steam_id: str
+
+
 class MatchReturnSchema(BaseModel):
     cords_spawn: List[dict]
     cloths: List[dict]

@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
 
+from app.init import redis_manager
 from app.routers.player_routers import player_router
 from app.routers.quest_routers import quest_router, admin_router as admin_router_quest
 from app.routers.secret_stash_routers import stashes_router, admin_router as admin_router_stashes
@@ -10,6 +13,13 @@ from app.routers.auction_routers import auction_router, admin_router as admin_ro
 from app.routers.arena_routers import admin_router as admin_router_arena
 from app.routers.arena_routers import arena_router
 from app.routers.bot_routers import admin_router as admin_router_bot, bot_router
+
+
+@asynccontextmanager
+async def lifespan(add: FastAPI):
+    redis_manager.connect()
+    yield
+    redis_manager.close()
 
 main_router = APIRouter(prefix='/v1')
 
