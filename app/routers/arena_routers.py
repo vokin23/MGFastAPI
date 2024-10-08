@@ -1,8 +1,9 @@
+import json
 from typing import List, Union
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert, or_, update
 
-from app import redis_manager
+from app.init import redis_manager
 from app.models.arena_model import Arena, Match
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
