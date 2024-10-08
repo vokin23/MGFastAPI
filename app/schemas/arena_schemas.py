@@ -33,6 +33,7 @@ class ArenaDeleteRegPlayerSchema(BaseModel):
 
 class MatchReturnSchema(BaseModel):
     cords_spawn: List[dict]
-    cloths: List[dict]
+    cloths1: List[dict]
     player1: str
+    cloths2: List[dict]
     player2: str

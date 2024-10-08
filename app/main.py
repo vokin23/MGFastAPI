@@ -5,6 +5,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
 
 from app.init import redis_manager
+from app.routers.action_router import action_router
 from app.routers.player_routers import player_router
 from app.routers.quest_routers import quest_router, admin_router as admin_router_quest
 from app.routers.secret_stash_routers import stashes_router, admin_router as admin_router_stashes
@@ -39,6 +40,7 @@ main_router.include_router(quest_router, tags=['Quests'])
 main_router.include_router(auction_router, tags=['Auction'])
 main_router.include_router(stashes_router, tags=['Stashes'])
 main_router.include_router(arena_router, tags=['Arena'])
+main_router.include_router(action_router, tags=['Actions'])
 main_router.include_router(bot_router, tags=['Bot'])
 
 app = FastAPI(lifespan=lifespan)

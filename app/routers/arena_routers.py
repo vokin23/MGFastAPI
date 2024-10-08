@@ -209,7 +209,48 @@ async def delete_register_arena(data: ArenaRegPlayerSchema) -> MSGArenaSchema:
             return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
 
 
-# TODO: Доработать метод обновления матча и создать вывод информации для КПК
+# TODO: создать вывод информации для КПК
 # @arena_router.post("/update_arena_match", summary="Обновить\завершить матч")
-async def update_arena_match(data, session, player) -> List[MatchReturnSchema]:
-    pass
+async def update_arena_match(session, player1, player2) -> List[MatchReturnSchema]:
+    return_list = []
+    match_obj = select(Match).where(or_(Match.player1 == player1.id, Match.player2 == player1.id),
+                                    or_(Match.player1 == player2.id, Match.player2 == player2.id),
+                                    Match.finished == False, Match.start == True)
+    match_stmt = await session.execute(match_obj)
+    match = match_stmt.scalar()
+    if match:
+        match.finished = True
+        match.time_end = get_moscow_time()
+        match.winner = player1.id
+        player1.rating, player2.rating = ArenaService.calculate_new_ratings(player1.rating, player2.rating, 1)
+        await session.commit()
+        return_list.append(MatchReturnSchema(cords_spawn=[match.old_cords_player1, match.old_cords_player2],
+                                             player1=player1.steam_id,
+                                             player2=player2.steam_id,
+                                             cloths1=match.old_things_player1,
+                                             cloths2=match.old_things_player2))
+        arena_queue_cache = await redis_manager.get("arena_queue")
+        arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
+        if arena_queue:
+            new_match_id = arena_queue.pop(0)
+            new_match_obj = select(Match).where(Match.id == new_match_id)
+            new_match_stmt = await session.execute(new_match_obj)
+            new_match = new_match_stmt.scalar()
+            new_match.start = True
+            new_match.time_start = get_moscow_time()
+            new_match.arena_set = match.arena_set
+            new_match.arena = match.arena
+            new_player1_obj = select(Player).where(Player.id == new_match.player1)
+            new_player1_stmt = await session.execute(new_player1_obj)
+            new_player1 = new_player1_stmt.scalar()
+            new_player2_obj = select(Player).where(Player.id == new_match.player2)
+            new_player2_stmt = await session.execute(new_player2_obj)
+            new_player2 = new_player2_stmt.scalar()
+            return_list.append(MatchReturnSchema(cords_spawn=match.arena.cords_spawn,
+                                                 player1=new_player1.id,
+                                                 player2=new_player2.id,
+                                                 cloths1=match.arena_set,
+                                                 cloths2=match.arena_set))
+            await session.commit()
+            await redis_manager.set("arena_queue", json.dumps(arena_queue))
+    return return_list
