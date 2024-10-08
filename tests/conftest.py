@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 from app.config import settings
+from app.init import redis_manager
 from app.models.datebase import Base, engine_null_pool, async_session_maker_null_pool
 from app.main import app
 from app.models import *
@@ -14,6 +15,13 @@ base_url = 'http://127.0.0.1:8000/'
 @pytest.fixture(scope="session", autouse=True)
 def test_check_mode():
     assert settings.MODE == "TEST"
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def test_redis_manager():
+    await redis_manager.connect()
+    yield
+    await redis_manager.close()
 
 
 @pytest.fixture(scope="session", autouse=True)

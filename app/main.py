@@ -17,9 +17,11 @@ from app.routers.bot_routers import admin_router as admin_router_bot, bot_router
 
 @asynccontextmanager
 async def lifespan(add: FastAPI):
-    redis_manager.connect()
+    await redis_manager.connect()
+    print("Connecting to Redis")
     yield
-    redis_manager.close()
+    await redis_manager.close()
+    print("Disconnecting from Redis")
 
 main_router = APIRouter(prefix='/v1')
 
@@ -39,7 +41,7 @@ main_router.include_router(stashes_router, tags=['Stashes'])
 main_router.include_router(arena_router, tags=['Arena'])
 main_router.include_router(bot_router, tags=['Bot'])
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.include_router(main_router)
 
 

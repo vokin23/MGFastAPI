@@ -2,6 +2,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.init import redis_manager
 from app.models.quest_model import ReputationType, Operator
 from app.service.base_service import read_json_async
 from app.main import app

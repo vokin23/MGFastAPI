@@ -58,7 +58,7 @@ async def update_arena(data: ArenaCreateSchema,
             setattr(arena_obj, key, value)
 
         await session.commit()
-        return arena_obj.scalar()
+        return arena_obj
 
 
 @admin_router.patch("/patch_arena", summary="Обновление Арены")
@@ -84,7 +84,7 @@ async def delete_arena(arena_id: int = Query(description='ID Арены')) -> Ar
         arena_obj = await session.execute(arena)
         await session.delete(arena_obj.scalar())
         await session.commit()
-        return arena_obj.scalar()
+        return arena_obj
 
 
 @arena_router.post("/register_arena", summary="Регистрация на Арену")
@@ -120,7 +120,8 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
             match.old_cords_player2 = cords
 
             arena_queue_cache = await redis_manager.get("arena_queue")
-            arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
+            arena_queue = json.loads(arena_queue_cache)
+            print(arena_queue)
 
             if free_arenas:
                 if len(arena_queue) == 0:
@@ -174,6 +175,8 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
 
             else:
                 arena_queue.append(match.id)
+                arena_queue_cache = json.dumps(arena_queue)
+                await redis_manager.set("arena_queue", arena_queue_cache)
                 await session.commit()
                 return [MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно зарегистрированы на арену")]
         else:
