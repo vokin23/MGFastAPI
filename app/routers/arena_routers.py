@@ -2,6 +2,7 @@ from typing import List, Union
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import select, insert, or_, update
 
+from app import redis_manager
 from app.models.arena_model import Arena, Match
 from app.models.datebase import async_session_maker
 from app.models.player_model import Player
@@ -10,7 +11,7 @@ from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGAre
 from app.service.arena_service import ArenaService
 from app.service.base_service import get_moscow_time
 
-arena_queue = []
+# arena_queue = []
 
 arena_router = APIRouter(prefix="/arena")
 admin_router = APIRouter(prefix="/arena")
@@ -56,9 +57,7 @@ async def update_arena(data: ArenaCreateSchema,
             setattr(arena_obj, key, value)
 
         await session.commit()
-        await session.refresh(arena_obj)
-
-        return arena_obj
+        return arena_obj.scalar()
 
 
 @admin_router.patch("/patch_arena", summary="Обновление Арены")
@@ -118,21 +117,60 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
             match.player2 = player.id
             match.old_things_player2 = items
             match.old_cords_player2 = cords
-            if free_arenas: # Добавить обработку очереди
-                arena = free_arenas[0]
-                match.arena = arena.id
-                match.arena_set = free_arenas[0].cloths  # Сделать рандомный выбор сета
-                free_arenas[0].free = False
-                match.start = True
-                match.time_start = get_moscow_time()
-                await session.commit()
-                steam_id_player1_obj = select(Player).where(Player.id == match.player1)
-                steam_id_player1_stmt = await session.execute(steam_id_player1_obj)
-                steam_id_player1 = steam_id_player1_stmt.scalar().steam_id
-                steam_id_player2 = player.steam_id
-                return [MatchReturnSchema(cords_spawn=arena.cords_spawn, player1=steam_id_player1,
-                                          player2=steam_id_player2, cloths=match.arena_set,
-                                          )]
+
+            arena_queue_cache = await redis_manager.get("arena_queue")
+            arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
+
+            if free_arenas:
+                if len(arena_queue) == 0:
+                    arena = free_arenas[0]
+                    match.arena = arena.id
+                    match.arena_set = free_arenas[0].cloths  # Сделать рандомный выбор сета
+                    free_arenas[0].free = False
+                    match.start = True
+                    match.time_start = get_moscow_time()
+                    await session.commit()
+                    steam_id_player1_obj = select(Player).where(Player.id == match.player1)
+                    steam_id_player1_stmt = await session.execute(steam_id_player1_obj)
+                    steam_id_player1 = steam_id_player1_stmt.scalar().steam_id
+                    steam_id_player2 = player.steam_id
+                    return [MatchReturnSchema(cords_spawn=arena.cords_spawn,
+                                              player1=steam_id_player1,
+                                              player2=steam_id_player2,
+                                              cloths=match.arena_set)]
+                else:
+                    arena_queue.append(match.id)
+                    new_match_list = []
+                    for i, free_arena in enumerate(free_arenas):
+
+                        new_match_id = arena_queue.pop(i)
+                        new_match_obj = select(Match).where(Match.id == new_match_id)
+                        new_match_stmt = await session.execute(new_match_obj)
+                        new_match = new_match_stmt.scalar()
+
+                        new_match.arena = free_arena.id
+                        new_match.arena_set = free_arena.cloths
+                        free_arena.free = False
+                        new_match.start = True
+                        new_match.time_start = get_moscow_time()
+
+                        steam_id_player1_obj = select(Player).where(Player.id == new_match.player1)
+                        steam_id_player1_stmt = await session.execute(steam_id_player1_obj)
+                        steam_id_player1 = steam_id_player1_stmt.scalar().steam_id
+
+                        steam_id_player2_obj = select(Player).where(Player.id == new_match.player2)
+                        steam_id_player2_stmt = await session.execute(steam_id_player2_obj)
+                        steam_id_player2 = steam_id_player2_stmt.scalar().steam_id
+
+                        new_match_list.append(MatchReturnSchema(cords_spawn=free_arena.cords_spawn,
+                                                                player1=steam_id_player1,
+                                                                player2=steam_id_player2,
+                                                                cloths=new_match.arena_set))
+                        await session.commit()
+                    arena_queue_cache = json.dumps(arena_queue)
+                    await redis_manager.set("arena_queue", arena_queue_cache)
+                    return new_match_list
+
             else:
                 arena_queue.append(match.id)
                 await session.commit()
@@ -145,7 +183,7 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
 
 
 @arena_router.post("/delete_register_arena", summary="Удаление регистрации на Арену")
-async def delete_register_arena(data: ArenaDeleteRegPlayerSchema) -> MSGArenaSchema:
+async def delete_register_arena(data: ArenaRegPlayerSchema) -> MSGArenaSchema:
     async with async_session_maker() as session:
         player_obj = select(Player).where(Player.steam_id == data.steam_id)
         player_stmt = await session.execute(player_obj)
@@ -158,25 +196,16 @@ async def delete_register_arena(data: ArenaDeleteRegPlayerSchema) -> MSGArenaSch
                                                Match.finished == False)
         player_match_stmt = await session.execute(player_match_obj)
         player_match = player_match_stmt.scalar()
-        if player_match and not player_match.start:
-            if player_match.player1 == player.id:
-                player_match.player1 = None
-                player_match.old_things_player1 = None
-                if not player_match.player2:
-                    await session.delete(player_match)
-                await session.commit()
-                return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
-            else:
-                player_match.player2 = None
-                player_match.old_things_player2 = None
-                if not player_match.player1:
-                    await session.delete(player_match)
-                await session.commit()
-                return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
+        arena_queue_cache = await redis_manager.get("arena_queue")
+        arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
+        if player_match and player_match.id in arena_queue:
+            arena_queue.remove(player_match.id)
+            arena_queue_cache = json.dumps(arena_queue)
+            await redis_manager.set("arena_queue", arena_queue_cache)
+            return MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно удалились с арены")
 
 
 # TODO: Доработать метод обновления матча и создать вывод информации для КПК
-@arena_router.post("/update_arena_match", summary="Обновить\завершить матч")
-async def update_arena_match(data: dict) -> List[MatchReturnSchema]:
-    async with async_session_maker() as session:
-        return []
+# @arena_router.post("/update_arena_match", summary="Обновить\завершить матч")
+async def update_arena_match(data, session, player) -> List[MatchReturnSchema]:
+    pass

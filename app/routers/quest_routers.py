@@ -301,16 +301,9 @@ async def get_info_pda(steam_id: str = Query(description='SteamID игрока')
         return PDAInfoSchema(**responce_data)
 
 
-@quest_router.post("/update_activity_player", summary="Обновляет активность игрока по квестам")
-async def update_activity_player(data: dict) -> MSGSchema:
-    async with async_session_maker() as session:
-        player = await QuestService.get_player_by_steam_id(session, data.get('Player').get('steamID'))
+# @quest_router.post("/update_activity_player", summary="Обновляет активность игрока по квестам")
+async def update_activity_player(data: dict, session, player, response_data) -> MSGSchema:
         active_activities = await QuestService.get_active_activities_not_complete(session, player.id)
-
-        response_data = {
-            "steam_id": player.steam_id,
-            "msg": ""
-        }
 
         activity_type = data.get("activityType")
 
