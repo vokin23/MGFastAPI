@@ -25,6 +25,11 @@ class Award(BaseModel):
     value: int
 
 
+class StashOpenSchema(BaseModel):
+    stash_id: int
+    steam_id: str
+
+
 class SecretStashOpenSchema(BaseModel):
     steam_id: str
     msg: str

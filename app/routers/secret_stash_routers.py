@@ -8,7 +8,7 @@ from app.models.datebase import async_session_maker
 from app.models.player_model import Player
 from app.models.secret_stash_models import Stash, StashCategory
 from app.schemas.secret_stash_schemas import SecretStashSchema, SecretStashCreateSchema, SecretStashOpenSchema, \
-    SecretStashCategoryCreate, SecretStashCategorySchema, SecretStashPatch, SecretStashCategoryPatch
+    SecretStashCategoryCreate, SecretStashCategorySchema, SecretStashPatch, SecretStashCategoryPatch, StashOpenSchema
 from app.service.secret_stash_service import SecretStashService
 
 stashes_router = APIRouter(prefix="/stashes")
@@ -78,8 +78,10 @@ async def delete_stash(stash_id: int = Query(description="ID Stash'а")) -> Secr
 
 
 @stashes_router.post("/open", summary="Открытие Stash'а")
-async def open_stash(stash_id: int = Query(), steam_id: str = Query()) -> SecretStashOpenSchema:
+async def open_stash(data: StashOpenSchema) -> SecretStashOpenSchema:
     async with async_session_maker() as session:
+        stash_id = data.stash_id
+        steam_id = data.steam_id
         stash = await session.execute(select(Stash).where(Stash.id == stash_id))
         stash = stash.scalar_one_or_none()
         player_obj = await session.execute(select(Player).where(Player.steam_id == steam_id))
