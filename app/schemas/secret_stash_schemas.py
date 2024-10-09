@@ -23,6 +23,7 @@ class SecretStashCreateSchema(BaseModel):
 class Award(BaseModel):
     class_name: str
     value: int
+    count: int
 
 
 class StashOpenSchema(BaseModel):
@@ -33,7 +34,7 @@ class StashOpenSchema(BaseModel):
 class SecretStashOpenSchema(BaseModel):
     steam_id: str
     msg: str
-    awards: List[Award]
+    awards: list[Award]
 
 
 class SecretStashCategorySchema(BaseModel):
@@ -41,21 +42,21 @@ class SecretStashCategorySchema(BaseModel):
     name: str
     description: str
     filling: int
-    awards_list: list[dict[str, int]]
+    awards_list: list[List[Award]]
 
 
 class SecretStashCategoryCreate(BaseModel):
     name: str
     description: str
     filling: int
-    awards_list: list[dict[str, int]]
+    awards_list: list[List[Award]]
 
 
 class SecretStashCategoryPatch(BaseModel):
     name: str | None
     description: str | None
     filling: int | None
-    awards_list: list[dict[str, int]] | None
+    awards_list: list[List[Award]] | None
 
 
 class SecretStashPatch(BaseModel):

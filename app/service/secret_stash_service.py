@@ -13,20 +13,15 @@ class SecretStashService:
         category = stmt_category.scalar_one()
         awards_list = category.awards_list
         awards = random.choice(awards_list)
-        award_response = []
+        print(awards)
 
-        count_awards = round(len(awards.keys()) * category.filling / 100)
-        random_awards = random.sample(list(awards.keys()), count_awards)
-        for award in random_awards:
-            award_response.append({
-                "class_name": award,
-                "value": awards[award]
-            })
-
+        count_awards = round(len(awards) * category.filling / 100)
+        random_awards = random.sample(awards, count_awards)
+        print(random_awards)
         response_data = {
             "steam_id": steam_id,
             "msg": "Поздравляем! Вы открыли схрон и получили награду",
-            "awards": award_response
+            "awards": random_awards
         }
         stash.is_opened = True
         await session.commit()
