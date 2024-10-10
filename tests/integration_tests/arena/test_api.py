@@ -81,11 +81,19 @@ async def test_register_arena(patch_arena_async_session_maker):
             response = await ac.post("/v1/arena/register_arena", json={
                 "steam_id": player.steam_id,
                 "items": [{}, {}, {}],
-                "position": player.steam_id,
-                "orientation": player.steam_id
+                "position": [player.steam_id, player.steam_id, player.steam_id],
+                "orientation": [player.steam_id, player.steam_id, player.steam_id]
             })
             assert response.status_code == 200
     await redis_manager.close()
+
+
+async def test_post_action_arena(patch_action_async_session_maker):
+    async with AsyncClient(app=app, base_url=base_url) as ac:
+        jsons = await read_json_async("tests/data/action.json")
+        for json in jsons:
+            response = await ac.post("/v1/action/action", json=json)
+            assert response.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -94,6 +102,14 @@ async def test_delete_register_arena(patch_arena_async_session_maker):
     await redis_manager.connect()
     async with AsyncClient(app=app, base_url=base_url) as ac:
         for player in players:
+            response = await ac.post("/v1/arena/register_arena", json={
+                "steam_id": player.steam_id,
+                "items": [{}, {}, {}],
+                "position": [player.steam_id, player.steam_id, player.steam_id],
+                "orientation": [player.steam_id, player.steam_id, player.steam_id]
+            })
+            assert response.status_code == 200
+
             response = await ac.post("/v1/arena/delete_register_arena", json={
                 "steam_id": player.steam_id
             })

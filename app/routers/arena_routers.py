@@ -234,22 +234,36 @@ async def delete_register_arena(data: DeleteRegArenaSchema) -> MSGArenaSchema:
 # @arena_router.post("/update_arena_match", summary="Обновить\завершить матч")
 async def update_arena_match(session, player1, player2) -> List[MatchReturnSchema]:
     return_list = []
-    match_obj = select(Match).where(or_(Match.player1 == player1.id, Match.player2 == player1.id),
-                                    or_(Match.player1 == player2.id, Match.player2 == player2.id),
-                                    Match.finished == False, Match.start == True)
+    match_obj = select(Match).where(
+        or_(Match.player1 == player1.id, Match.player2 == player1.id),
+        or_(Match.player1 == player2.id, Match.player2 == player2.id),
+        Match.finished == False, Match.start == True
+    )
     match_stmt = await session.execute(match_obj)
     match = match_stmt.scalar()
     if match:
+        match_arena_obj = select(Arena).where(Arena.id == match.arena)
+        match_arena_stmt = await session.execute(match_arena_obj)
+        match_arena = match_arena_stmt.scalar()
+        match_arena.free = True
         match.finished = True
         match.time_end = get_moscow_time()
         match.winner = player1.id
-        player1.rating, player2.rating = ArenaService.calculate_new_ratings(player1.rating, player2.rating, 1)
+        player1.arena_wins += 1
+        player2.arena_loses += 1
+        player1.kills += 1
+        player2.deaths += 1
+        player1.arena_rating, player2.arena_rating = ArenaService.calculate_new_ratings(
+            player1.arena_rating, player2.arena_rating, 1
+        )
         await session.commit()
-        return_list.append(MatchReturnSchema(cords_spawn=[match.old_cords_player1, match.old_cords_player2],
-                                             player1=player1.steam_id,
-                                             player2=player2.steam_id,
-                                             cloths1=match.old_things_player1,
-                                             cloths2=match.old_things_player2))
+        return_list.append(MatchReturnSchema(
+            cords_spawn=[match.old_cords_player1, match.old_cords_player2],
+            player1=player1.steam_id,
+            player2=player2.steam_id,
+            cloths1=match.old_things_player1,
+            cloths2=match.old_things_player2
+        ))
         arena_queue_cache = await redis_manager.get("arena_queue")
         arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
         if arena_queue:
@@ -261,17 +275,20 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
             new_match.time_start = get_moscow_time()
             new_match.arena_set = match.arena_set
             new_match.arena = match.arena
+            match_arena.free = False
             new_player1_obj = select(Player).where(Player.id == new_match.player1)
             new_player1_stmt = await session.execute(new_player1_obj)
             new_player1 = new_player1_stmt.scalar()
             new_player2_obj = select(Player).where(Player.id == new_match.player2)
             new_player2_stmt = await session.execute(new_player2_obj)
             new_player2 = new_player2_stmt.scalar()
-            return_list.append(MatchReturnSchema(cords_spawn=match.arena.cords_spawn,
-                                                 player1=new_player1.id,
-                                                 player2=new_player2.id,
-                                                 cloths1=match.arena_set,
-                                                 cloths2=match.arena_set))
+            return_list.append(MatchReturnSchema(
+                cords_spawn=[new_match.old_cords_player1, new_match.old_cords_player2],
+                player1=new_player1.steam_id,
+                player2=new_player2.steam_id,
+                cloths1=new_match.old_things_player1,
+                cloths2=new_match.old_things_player2
+            ))
             await session.commit()
             await redis_manager.set("arena_queue", json.dumps(arena_queue))
     return return_list

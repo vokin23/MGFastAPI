@@ -19,8 +19,8 @@ async def action_update_or_create(data: dict) -> list[MSGSchema | list[MatchRetu
             "steam_id": player.steam_id,
             "msg": ""
         }
-        quest_activity_player = await update_activity_player(session, player, data.get('Player').get('activity'), response_data)
-        if quest_activity_player["msg"]:
+        quest_activity_player = await update_activity_player(session=session, player=player, data=data, response_data=response_data)
+        if quest_activity_player.msg:
             response_data = quest_activity_player
         if data["activityType"] == "MG_Activity_PlayerKillHandler":
             player2_steam_id = data["AnotherPlayer"]["steamID"]

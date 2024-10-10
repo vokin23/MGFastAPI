@@ -4,12 +4,12 @@
     "description": "The first arena",
     "cords_spawn": [
       {
-        "position": "1, 1, 1",
-        "orientation": "1, 1, 1"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       },
       {
-        "position": "2, 2, 2",
-        "orientation": "2, 2, 2"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       }
     ],
     "cloths": [
@@ -30,12 +30,12 @@
     "description": "The second arena",
     "cords_spawn": [
       {
-        "position": "3, 3, 3",
-        "orientation": "3, 3, 3"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       },
       {
-        "position": "4, 4, 4",
-        "orientation": "4, 4, 4"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       }
     ],
     "cloths": [
@@ -56,12 +56,12 @@
     "description": "The third arena",
     "cords_spawn": [
       {
-        "position": "5, 5, 5",
-        "orientation": "5, 5, 5"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       },
       {
-        "position": "6, 6, 6",
-        "orientation": "6, 6, 6"
+        "position": ["1", "1", "1"],
+        "orientation": ["1", "1", "1"]
       }
     ],
     "cloths": [

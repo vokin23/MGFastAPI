@@ -18,10 +18,10 @@ celery_instance.conf.beat_schedule = {
     },
     "player_info": {
         "task": "update_player_info",
-        "schedule": 20
+        "schedule": 230
     },
     "fraction_info": {
         "task": "update_fraction_info",
-        "schedule": 20
+        "schedule": 230
     }
 }

@@ -15,7 +15,7 @@ services:
     volumes:
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
-      - - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/MGStalker/Fractions
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/Fractions
 
   celery_worker:
     container_name: 'celery_worker_mg'
@@ -25,14 +25,14 @@ services:
       - MGNetwork
     env_file:
       - ".env"
-    command: "celery --app=app.tasks.celery_app:celery_instance worker -l INFO"
+    command: "celery --app=app.tasks.celery_app:celery_instance worker -l INFO --concurrency=10"
     depends_on:
       - db
       - redis
     volumes:
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
-      - - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/MGStalker/Fractions
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/Fractions
 
   celery_beat:
     container_name: 'celery_beat_mg'
@@ -49,7 +49,7 @@ services:
     volumes:
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\PlayersDB:/app/PlayersDB
       - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker:/app/MGStalker
-      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/MGStalker/Fractions
+      - C:\MGStalker\servers\StalkerRP\profiles\MindGamesStalker\Fractions:/app/Fractions
   db:
     image: postgres:16
     container_name: 'postgres_mg'

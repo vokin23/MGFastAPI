@@ -23,16 +23,21 @@ class ArenaBaseSchema(ArenaCreateSchema):
 class ArenaRegPlayerSchema(BaseModel):
     steam_id: str
     items: List[dict]
-    position: str
-    orientation: str
+    position: List[str]
+    orientation: List[str]
 
 
 class ArenaDeleteRegPlayerSchema(BaseModel):
     steam_id: str
 
 
+# class CordsSpawnSchema(BaseModel):
+#     position: List[str]
+#     orientation: List[str]
+
+
 class MatchReturnSchema(BaseModel):
-    cords_spawn: List[dict]
+    cords_spawn: list
     cloths1: List[dict]
     player1: str
     cloths2: List[dict]

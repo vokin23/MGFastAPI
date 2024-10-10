@@ -49,7 +49,8 @@ async def update_player_info():
     for file in files:
         async with async_session_maker_null_pool() as session:
             player = await read_json_async(f'{directory_path}/{file}')
-            player_obj = await session.execute(select(Player).where(Player.steam_id == player['steam_id']))
+            steam_id = str(file).split(".")[0]
+            player_obj = await session.execute(select(Player).where(Player.steam_id == steam_id))
             player_db = player_obj.scalar()
             if player_db is None:
                 continue

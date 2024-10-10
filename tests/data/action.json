@@ -1,36 +1,254 @@
-{
-  "activityType": "MG_Activity_PlayerKillHandler",
-  "Player": {
-    "playerName": "Vado6ix",
-    "steamID": "76561199445528223",
-    "position": [
-      4676.65673828125,
-      83.57009887695312,
-      1900.653076171875
-    ],
-    "orientation": [
-      27.719511032104492,
-      0.0,
-      -0.0
-    ],
-    "heldItem": "BK-43"
+[
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177741",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177742",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
   },
-  "date": "8.10.2024 21:20:14",
-  "weaponName": "BK-43",
-  "AnotherPlayer": {
-    "playerName": "Karat",
-    "steamID": "76561199511983922",
-    "position": [
-      4676.65087890625,
-      83.56124114990234,
-      1902.8868408203125
-    ],
-    "orientation": [
-      -121.78939819335938,
-      0.0,
-      -0.0
-    ],
-    "heldItem": "Sawed-off BK-43"
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177743",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177744",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
   },
-  "deathType": ""
-}
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177746",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177745",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
+  },
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177747",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177748",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
+  },
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177749",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177750",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
+  },
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177751",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177752",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
+  },
+  {
+    "activityType": "MG_Activity_PlayerKillHandler",
+    "Player": {
+      "playerName": "Vado6ix",
+      "steamID": "76561198201177753",
+      "position": [
+        4676.65673828125,
+        83.57009887695312,
+        1900.653076171875
+      ],
+      "orientation": [
+        27.719511032104492,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "BK-43"
+    },
+    "date": "8.10.2024 21:20:14",
+    "weaponName": "BK-43",
+    "AnotherPlayer": {
+      "playerName": "Karat",
+      "steamID": "76561198201177754",
+      "position": [
+        4676.65087890625,
+        83.56124114990234,
+        1902.8868408203125
+      ],
+      "orientation": [
+        -121.78939819335938,
+        0.0,
+        -0.0
+      ],
+      "heldItem": "Sawed-off BK-43"
+    },
+    "deathType": ""
+  }
+]
