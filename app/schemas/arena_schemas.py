@@ -37,3 +37,7 @@ class MatchReturnSchema(BaseModel):
     player1: str
     cloths2: List[dict]
     player2: str
+
+
+class DeleteRegArenaSchema(BaseModel):
+    steam_id: str
