@@ -22,6 +22,7 @@ async def get_operators():
         return result.scalars().all()
 
 
+@pytest.mark.asyncio
 async def test_create_operators(patch_quest_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         reputations_types = await get_reputation_type()
@@ -42,6 +43,7 @@ async def test_create_operators(patch_quest_async_session_maker):
             assert response.status_code == 200
 
 
+@pytest.mark.asyncio
 async def test_create_quest(patch_quest_async_session_maker):
     async with AsyncClient(app=app, base_url=base_url) as ac:
         operators = await get_operators()

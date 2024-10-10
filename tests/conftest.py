@@ -18,13 +18,6 @@ def test_check_mode():
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def test_redis_manager():
-    await redis_manager.connect()
-    yield
-    await redis_manager.close()
-
-
-@pytest.fixture(scope="session", autouse=True)
 async def test_setup_database(test_check_mode):
     async with engine_null_pool.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
