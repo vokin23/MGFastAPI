@@ -10,7 +10,7 @@ from app.models.player_model import Player, Fraction
 from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGArenaSchema, \
     ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema, DeleteRegArenaSchema, StatsArePdaSchema, \
     PlayerInTopSchema
-from app.service.arena_service import ArenaService
+from app.service.arena_service import ArenaService, CustomJSONEncoder
 from app.service.base_service import get_moscow_time
 
 # arena_queue = []
@@ -306,6 +306,7 @@ async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрок
         players = result.scalars().all()
         if await redis_manager.get("tops"):
             tops_cache = await redis_manager.get("tops")
+            print('Redis get')
             tops = json.loads(tops_cache)
         else:
             tops = []
@@ -313,11 +314,15 @@ async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрок
                 player_top_fraction_obj = select(Fraction).where(Fraction.id == player_top.fraction_id)
                 player_top_fraction_stmt = await session.execute(player_top_fraction_obj)
                 player_top_fraction = player_top_fraction_stmt.scalar()
+                if player_top_fraction:
+                    fraction = player_top_fraction.name
+                else:
+                    fraction = "Вольный Сталкер"
                 tops.append(PlayerInTopSchema(
                     steam_id=player_top.steam_id,
                     name=player_top.name,
                     surname=player_top.surname,
-                    fraction=player_top_fraction.name,
+                    fraction=fraction,
                     vip=player_top.vip,
                     arena_rating=player_top.arena_rating,
                     arena_rang=players.index(player_top) + 1,
@@ -328,7 +333,7 @@ async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрок
                     matches=player_top.arena_wins + player_top.arena_loses,
                     history_matches=await ArenaService.get_last_10_matches(player_top.id, session)
                 ))
-            await redis_manager.set("tops", json.dumps(tops), expire=3600)
+            await redis_manager.set("tops", json.dumps(tops, cls=CustomJSONEncoder), expire=3600)
         player_fraction_obj = select(Fraction).where(Fraction.id == player.fraction_id)
         player_fraction_stmt = await session.execute(player_fraction_obj)
         player_fraction = player_fraction_stmt.scalar()
@@ -336,7 +341,7 @@ async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрок
             steam_id=player.steam_id,
             name=player.name,
             surname=player.surname,
-            fraction=player_fraction.name,
+            fraction=player_fraction.name if player_fraction else 'Вольный Сталкер',
             vip=player.vip,
             arena_rating=player.arena_rating,
             arena_rang=players.index(player) + 1,

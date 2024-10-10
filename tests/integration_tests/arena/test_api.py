@@ -115,3 +115,11 @@ async def test_delete_register_arena(patch_arena_async_session_maker):
             })
             assert response.status_code == 200
     await redis_manager.close()
+
+
+async def test_stats_arena_pda(patch_arena_async_session_maker):
+    players = await get_players()
+    async with AsyncClient(app=app, base_url=base_url) as ac:
+        for player in players:
+            response = await ac.get("/v1/arena/stats_arena_pda", params={"steam_id": player.steam_id})
+            assert response.status_code == 200

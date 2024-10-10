@@ -1,3 +1,4 @@
+import json
 import random
 
 from sqlalchemy import select, update, insert, or_, desc
@@ -5,7 +6,8 @@ from sqlalchemy import select, update, insert, or_, desc
 from app.models import Player
 from app.models.arena_model import Match, Arena
 from app.models.datebase import async_session_maker_null_pool
-from app.schemas.arena_schemas import MatchReturnSchema, HistoryMatchSchema, HistoryPlayerSchema
+from app.models.player_model import Fraction
+from app.schemas.arena_schemas import MatchReturnSchema, HistoryMatchSchema, HistoryPlayerSchema, PlayerInTopSchema
 from app.service.base_service import get_moscow_time
 
 
@@ -70,22 +72,32 @@ class ArenaService:
         for match in matches:
             player1 = await session.get(Player, match.player1)
             player2 = await session.get(Player, match.player2)
-            player1 = HistoryPlayerSchema(
+            fraction_obj1 = await session.execute(select(Fraction).where(Fraction.id == player1.fraction_id))
+            fraction_obj2 = await session.execute(select(Fraction).where(Fraction.id == player2.fraction_id))
+
+            player1_return = HistoryPlayerSchema(
                 steam_id=player1.steam_id,
                 name=player1.name,
                 surname=player1.surname,
-                fraction=player1.fraction_name
+                fraction=fraction_obj1.scalar().name if fraction_obj1.scalar() else 'Вольный Сталкер'
             )
-            player2 = HistoryPlayerSchema(
+            player2_return = HistoryPlayerSchema(
                 steam_id=player2.steam_id,
                 name=player2.name,
                 surname=player2.surname,
-                fraction=player2.fraction_name
+                fraction=fraction_obj2.scalar().name if fraction_obj2.scalar() else 'Вольный Сталкер'
             )
             history_match = HistoryMatchSchema(
-                players=[player1, player2],
-                winner=match.winner
+                players=[player1_return, player2_return],
+                winner=player1.steam_id if match.winner == player1.id else player2.steam_id
             )
             history_matches.append(history_match)
 
         return history_matches
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, PlayerInTopSchema):
+            return o.dict()
+        return super().default(o)
