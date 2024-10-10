@@ -32,6 +32,7 @@ class Player(Base):
     arena_loses: Mapped[int] = mapped_column(default=0)
     kills: Mapped[int] = mapped_column(default=0)
     deaths: Mapped[int] = mapped_column(default=0)
+    reset: Mapped[bool] = mapped_column(default=False)
 
 
 class Fraction(Base):
