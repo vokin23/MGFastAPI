@@ -1,14 +1,15 @@
 import json
 from typing import List, Union
 from fastapi import APIRouter, Query, HTTPException
-from sqlalchemy import select, insert, or_, update
+from sqlalchemy import select, insert, or_, update, desc
 
 from app.init import redis_manager
 from app.models.arena_model import Arena, Match
 from app.models.datebase import async_session_maker
-from app.models.player_model import Player
+from app.models.player_model import Player, Fraction
 from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGArenaSchema, \
-    ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema, DeleteRegArenaSchema
+    ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema, DeleteRegArenaSchema, StatsArePdaSchema, \
+    PlayerInTopSchema
 from app.service.arena_service import ArenaService
 from app.service.base_service import get_moscow_time
 
@@ -147,7 +148,6 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
                     arena_queue.append(match.id)
                     new_match_list = []
                     for i, free_arena in enumerate(free_arenas):
-
                         new_match_id = arena_queue.pop(arena_queue[i])
                         new_match_obj = select(Match).where(Match.id == new_match_id)
                         new_match_stmt = await session.execute(new_match_obj)
@@ -276,4 +276,58 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
             await redis_manager.set("arena_queue", json.dumps(arena_queue))
     return return_list
 
-# TODO: создать вывод информации для КПК
+
+@arena_router.get("/stats_arena_pda", summary="Статистика по аренам")
+async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрока')) -> StatsArePdaSchema:
+    async with async_session_maker() as session:
+        player_obj = select(Player).where(Player.steam_id == steam_id)
+        player_stmt = await session.execute(player_obj)
+        player = player_stmt.scalar()
+        if not player:
+            raise HTTPException(status_code=404, detail="Игрок не найден")
+        result = await session.execute(select(Player).order_by(desc(Player.arena_rating)))
+        players = result.scalars().all()
+        if await redis_manager.get("tops"):
+            tops_cache = await redis_manager.get("tops")
+            tops = json.loads(tops_cache)
+        else:
+            tops = []
+            for player_top in players:
+                player_top_fraction_obj = select(Fraction).where(Fraction.id == player_top.fraction_id)
+                player_top_fraction_stmt = await session.execute(player_top_fraction_obj)
+                player_top_fraction = player_top_fraction_stmt.scalar()
+                tops.append(PlayerInTopSchema(
+                    steam_id=player_top.steam_id,
+                    name=player_top.name,
+                    surname=player_top.surname,
+                    fraction=player_top_fraction.name,
+                    vip=player_top.vip,
+                    arena_rating=player_top.arena_rating,
+                    arena_rang=players.index(player_top) + 1,
+                    KD=player_top.kills / player_top.deaths if player_top.deaths != 0 else player_top.kills,
+                    win_rate=player_top.arena_wins / (player_top.arena_wins + player_top.arena_loses) * 100
+                    if player_top.arena_loses != 0 else 100,
+                    max_win_streak=await ArenaService.calculate_max_win_streak(player_top.id, session),
+                    matches=player_top.arena_wins + player_top.arena_loses,
+                    history_matches=await ArenaService.get_last_10_matches(player_top.id, session)
+                ))
+            await redis_manager.set("tops", json.dumps(tops), expire=3600)
+        player_fraction_obj = select(Fraction).where(Fraction.id == player.fraction_id)
+        player_fraction_stmt = await session.execute(player_fraction_obj)
+        player_fraction = player_fraction_stmt.scalar()
+        return StatsArePdaSchema(
+            steam_id=player.steam_id,
+            name=player.name,
+            surname=player.surname,
+            fraction=player_fraction.name,
+            vip=player.vip,
+            arena_rating=player.arena_rating,
+            arena_rang=players.index(player) + 1,
+            KD=player.kills / player.deaths if player.deaths != 0 else player.kills,
+            win_rate=player.arena_wins / (player.arena_wins + player.arena_loses) * 100
+            if player.arena_loses != 0 else 100,
+            max_win_streak=await ArenaService.calculate_max_win_streak(player.id, session),
+            matches=player.arena_wins + player.arena_loses,
+            history_matches=await ArenaService.get_last_10_matches(player.id, session),
+            tops=tops
+        )

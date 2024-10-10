@@ -41,3 +41,46 @@ class MatchReturnSchema(BaseModel):
 
 class DeleteRegArenaSchema(BaseModel):
     steam_id: str
+
+
+class HistoryPlayerSchema(BaseModel):
+    steam_id: str
+    name: str
+    surname: str
+    fraction: str
+
+
+class HistoryMatchSchema(BaseModel):
+    players: List[HistoryPlayerSchema]
+    winner: str
+
+
+class PlayerInTopSchema(BaseModel):
+    steam_id: str
+    name: str
+    surname: str
+    fraction: str
+    vip: bool
+    arena_rating: int
+    arena_rang: int
+    KD: int
+    win_rate: int
+    max_win_streak: int
+    matches: int
+    history_matches: List[HistoryMatchSchema]
+
+
+class StatsArePdaSchema(BaseModel):
+    steam_id: str
+    name: str
+    surname: str
+    fraction: str
+    vip: bool
+    arena_rating: int
+    arena_rang: int
+    KD: int
+    win_rate: int
+    max_win_streak: int
+    matches: int
+    history_matches: List[HistoryMatchSchema]
+    tops: List[PlayerInTopSchema]

@@ -5,10 +5,11 @@ import aiofiles
 import pytz
 from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, insert
 
 from app.models import Player
 from app.models.datebase import async_session_maker_null_pool
+from app.models.player_model import Fraction
 
 
 def get_moscow_time():
@@ -62,9 +63,47 @@ async def update_player_info():
             await session.commit()
 
 
+async def update_fraction_info():
+    directory_path_profiles = '/app/MGStalker'
+    directory_path_fraction = '/app/MGStalker/Fractions'
+    base_fractions = await read_json_async(f'{directory_path_profiles}/Fractions.json')
+    async with async_session_maker_null_pool() as session:
+        for fraction in base_fractions['Fractions']:
+            fraction_id = fraction['FractionID']
+            fraction_name = fraction['Name']
+            fraction_logo = fraction['Logo']
+            fraction_json = fraction['FractionJson']
+            fraction_main = await read_json_async(f'{directory_path_fraction}/{fraction_json}')
+            leader_steam_id = fraction_main['LeaderSteamID']
+            leader_name = fraction_main['LeaderName']
+            spawn_pos = fraction_main['SpawnPos']
+            max_staff = fraction_main['MaxStaff']
+
+            fraction_obj = await session.execute(select(Fraction).where(Fraction.fraction_id == fraction_id))
+            fraction_db = fraction_obj.scalar()
+            if fraction_db:
+                fraction_db.name = fraction_name
+                fraction_db.leader_steam_id = leader_steam_id
+                fraction_db.leader_name = leader_name
+                fraction_db.logo = fraction_logo
+                fraction_db.spawn_pos = spawn_pos
+                fraction_db.max_staff = max_staff
+            else:
+                new_fraction = insert(Fraction).values(
+                    fraction_id=fraction_id,
+                    name=fraction_name,
+                    leader_steam_id=leader_steam_id,
+                    leader_name=leader_name,
+                    logo=fraction_logo,
+                    spawn_pos=spawn_pos,
+                    max_staff=max_staff
+                )
+                await session.execute(new_fraction)
+                await session.commit()
+
+
 async def add_vip_status(steam_id, vip_lvl):
     file_path = '/app/PlayersDB'
-    async with async_session_maker_null_pool() as session:
-        data_player = await read_json_async(f"{file_path}/{steam_id}.json")
-        data_player['VIP_Lvl'] = vip_lvl
-        await write_json_async(f"{file_path}/{steam_id}.json", data_player)
+    data_player = await read_json_async(f"{file_path}/{steam_id}.json")
+    data_player['VIP_Lvl'] = vip_lvl
+    await write_json_async(f"{file_path}/{steam_id}.json", data_player)

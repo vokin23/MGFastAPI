@@ -27,7 +27,9 @@ class Player(Base):
     created_at_player: Mapped[datetime] = mapped_column(DateTime)
     created_at_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     date_end_vip: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
-    arena_ranking: Mapped[int] = mapped_column(default=0)
+    arena_rating: Mapped[int] = mapped_column(default=0)
+    arena_wins: Mapped[int] = mapped_column(default=0)
+    arena_loses: Mapped[int] = mapped_column(default=0)
     kills: Mapped[int] = mapped_column(default=0)
     deaths: Mapped[int] = mapped_column(default=0)
 
@@ -36,6 +38,7 @@ class Fraction(Base):
     __tablename__ = 'fraction'
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    fraction_id: Mapped[int] = mapped_column(default=-1)
     name: Mapped[str] = mapped_column(String(50))
     leader_steam_id: Mapped[str] = mapped_column(String(17))
     leader_name: Mapped[str] = mapped_column(String(50))

@@ -34,7 +34,7 @@ class PlayerSchema(BaseModel):
     created_at_player: datetime
     created_at_vip: str | None
     date_end_vip: str | None
-    arena_ranking: int
+    arena_rating: int
     kills: int
     deaths: int
 
@@ -60,7 +60,7 @@ class PlayerUpdateSchema(BaseModel):
     exp: List[ExpSchema] | None
     created_at_vip: str | None
     date_end_vip: str | None
-    arena_ranking: int
+    arena_rating: int
     kills: int
     deaths: int
 
@@ -82,7 +82,7 @@ class PlayerPatchSchema(BaseModel):
     exp: List[ExpSchema] | None
     created_at_vip: str | None
     date_end_vip: str | None
-    arena_ranking: int
+    arena_rating: int
     kills: int
     deaths: int
 
