@@ -101,7 +101,8 @@ async def open_stash(request: StashOpenSchema) -> SecretStashOpenSchema:
                 return await SecretStashService.open_stash(session, stash, player)
             response_data = {
                 "steam_id": request.steam_id,
-                "stash_id": None,
+                "stash_id": stash.id,
+                "is_opened": stash.is_opened,
                 "msg": "К сожалению, вы не смогли открыть схрон! Попробуйте еще раз!",
                 "awards": []
             }

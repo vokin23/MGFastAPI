@@ -79,12 +79,14 @@ class SecretStashService:
                 awards = random.choice(awards_list)
                 count_awards = round(len(awards) * category.filling / 100)
                 random_awards.extend(random.sample(awards, count_awards))
+
+        stash.is_opened = True
+        await session.commit()
         response_data = {
             "steam_id": player.steam_id,
             "stash_id": stash.id,
+            "is_opened": stash.is_opened,
             "msg": "Поздравляем! Вы открыли схрон и получили награду",
             "awards": random_awards
         }
-        stash.is_opened = True
-        await session.commit()
         return SecretStashOpenSchema(**response_data)
