@@ -33,6 +33,7 @@ class StashOpenSchema(BaseModel):
 
 class SecretStashOpenSchema(BaseModel):
     steam_id: str
+    stash_id: int | None
     msg: str
     awards: list[Award]
 

@@ -87,24 +87,25 @@ async def open_stash(request: StashOpenSchema) -> SecretStashOpenSchema:
         if player is None:
             raise HTTPException(status_code=404, detail="Player not found")
         if stash is None:
-            return SecretStashOpenSchema(steam_id=request.steam_id, msg="Похоже, произошла аномалия! Думаю, следует обратиться куда-то выше.", awards=[])
+            return SecretStashOpenSchema(steam_id=request.steam_id, msg="Похоже, произошла аномалия! Думаю, следует обратиться куда-то выше.", awards=[], stash_id=None)
         if stash.is_opened:
-            return SecretStashOpenSchema(steam_id=request.steam_id, msg="Похоже, что схрон уже открыли до вас", awards=[])
+            return SecretStashOpenSchema(steam_id=request.steam_id, msg="Похоже, что схрон уже открыли до вас", awards=[], stash_id=None)
         else:
             if player.vip_lvl == 4:
-                return await SecretStashService.open_stash(session, stash, request.steam_id)
+                return await SecretStashService.open_stash(session, stash, player)
             elif player.vip_lvl == 3 and random.randint(0, 100) > 25:
-                return await SecretStashService.open_stash(session, stash, request.steam_id)
+                return await SecretStashService.open_stash(session, stash, player)
             elif player.vip_lvl == 2 and random.randint(0, 100) > 50:
-                return await SecretStashService.open_stash(session, stash, request.steam_id)
+                return await SecretStashService.open_stash(session, stash, player)
             elif player.vip_lvl in [0, 1] and random.randint(0, 100) > 65:
-                return await SecretStashService.open_stash(session, stash, request.steam_id)
+                return await SecretStashService.open_stash(session, stash, player)
             response_data = {
                 "steam_id": request.steam_id,
+                "stash_id": None,
                 "msg": "К сожалению, вы не смогли открыть схрон! Попробуйте еще раз!",
                 "awards": []
             }
-    return SecretStashOpenSchema(**response_data)
+            return SecretStashOpenSchema(**response_data)
 
 
 @admin_router.post("/crate_category", summary="Создание новой категории Stash'ей")
