@@ -89,3 +89,16 @@ class StatsArePdaSchema(BaseModel):
     matches: int
     history_matches: List[HistoryMatchSchema]
     tops: List[PlayerInTopSchema]
+
+
+class PlayerInArenaQueueSchema(BaseModel):
+    name: str
+    surname: str
+
+
+class OpenArenaMenuSchema(BaseModel):
+    steam_id: str
+    registration_required: bool
+    queue_position: int | None
+    players: List[PlayerInArenaQueueSchema] | None
+    description: str | None

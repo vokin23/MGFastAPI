@@ -1,7 +1,7 @@
 import json
 from typing import List, Union
 from fastapi import APIRouter, Query, HTTPException
-from sqlalchemy import select, insert, or_, update, desc
+from sqlalchemy import select, insert, or_, update, desc, and_
 
 from app.init import redis_manager
 from app.models.arena_model import Arena, Match
@@ -9,7 +9,7 @@ from app.models.datebase import async_session_maker
 from app.models.player_model import Player, Fraction
 from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGArenaSchema, \
     ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema, DeleteRegArenaSchema, StatsArePdaSchema, \
-    PlayerInTopSchema
+    PlayerInTopSchema, OpenArenaMenuSchema
 from app.service.arena_service import ArenaService, CustomJSONEncoder
 from app.service.base_service import get_moscow_time
 
@@ -352,4 +352,82 @@ async def stats_arena_pda(steam_id: str = Query(description='Steam ID игрок
             matches=player.arena_wins + player.arena_loses,
             history_matches=await ArenaService.get_last_10_matches(player.id, session),
             tops=tops
+        )
+
+
+@arena_router.get("/open_arena_menu", summary="Открыть меню арены у нпс")
+async def open_arena_menu(steam_id: str = Query(description='Steam ID игрока')) -> OpenArenaMenuSchema:
+    async with async_session_maker() as session:
+        player_obj = select(Player).where(Player.steam_id == steam_id)
+        player_stmt = await session.execute(player_obj)
+        player = player_stmt.scalar()
+        active_player_match_obj = select(Match).where(or_(Match.player1 == player.id, Match.player2 == player.id),
+                                                        Match.finished == False, Match.start == True)
+        active_player_match_stmt = await session.execute(active_player_match_obj)
+        active_player_match = active_player_match_stmt.scalar()
+        if active_player_match:
+            raise HTTPException(status_code=400, detail="Игрок уже на арене")
+        if not player:
+            raise HTTPException(status_code=404, detail="Игрок не найден")
+
+        player_mathc = select(Match).where(and_(or_(Match.player1 == player.id, Match.player2 == player.id),
+                                                Match.finished == False, Match.start == False))
+        player_match_stmt = await session.execute(player_mathc)
+        player_match = player_match_stmt.scalar()
+
+        if player_match:
+            registration_required = False
+            if player_match.player1 and player_match.player2:
+                description = None
+                arena_queue_cache = await redis_manager.get("arena_queue")
+                arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
+                if player_match.id in arena_queue:
+                    queue_position = arena_queue.index(player_match.id) + 1
+                else:
+                    queue_position = None
+
+                if player.id == player_match.player1:
+                    player2_obj = select(Player).where(Player.id == player_match.player2)
+                    player2_stmt = await session.execute(player2_obj)
+                    player2 = player2_stmt.scalar()
+                    players = [
+                        {
+                            "name": f"{player.name}",
+                            "surname": f"{player.surname}"
+                        },
+                        {
+                            "name": f"{player2.name}",
+                            "surname": f"{player2.surname}"
+                        }
+                    ]
+                else:
+                    player1_obj = select(Player).where(Player.id == player_match.player1)
+                    player1_stmt = await session.execute(player1_obj)
+                    player1 = player1_stmt.scalar()
+                    players = [
+                        {
+                            "name": f"{player1.name}",
+                            "surname": f"{player1.surname}"
+                        },
+                        {
+                            "name": f"{player.name}",
+                            "surname": f"{player.surname}"
+                        }
+                    ]
+            else:
+                queue_position = None
+                players = None
+                description = "Идёт подбор соперника"
+        else:
+            queue_position = None
+            registration_required = True
+            players = None
+            description = "Вы не зарегистрированы на арену"
+
+        return OpenArenaMenuSchema(
+            steam_id=player.steam_id,
+            registration_required=registration_required,
+            queue_position=queue_position,
+            players=players,
+            description=description
         )
