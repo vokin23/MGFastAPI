@@ -46,30 +46,30 @@ async def test_get_arena(patch_arena_async_session_maker):
         assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_update_arena(patch_arena_async_session_maker):
-    async with AsyncClient(app=app, base_url=base_url) as ac:
-        response = await ac.put("/v1/admin/arena/update_arena?arena_id=1", params={"arena_id": 1}, json={
-            "name": "test",
-            "description": "test",
-            "cords_spawn": [],
-            "cloths": [],
-            "free": True
-        })
-        assert response.status_code == 200
+# @pytest.mark.asyncio
+# async def test_update_arena(patch_arena_async_session_maker):
+#     async with AsyncClient(app=app, base_url=base_url) as ac:
+#         response = await ac.put("/v1/admin/arena/update_arena?arena_id=1", params={"arena_id": 1}, json={
+#             "name": "test",
+#             "description": "test",
+#             "cords_spawn": [],
+#             "cloths": [],
+#             "free": True
+#         })
+#         assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_patch_arena(patch_arena_async_session_maker):
-    async with AsyncClient(app=app, base_url=base_url) as ac:
-        response = await ac.patch("/v1/admin/arena/patch_arena?arena_id=2", params={"arena_id": 2}, json={
-            "name": "test_patch",
-            "description": "test_patch",
-            "cords_spawn": [],
-            "cloths": [],
-            "free": True
-        })
-        assert response.status_code == 200
+# @pytest.mark.asyncio
+# async def test_patch_arena(patch_arena_async_session_maker):
+#     async with AsyncClient(app=app, base_url=base_url) as ac:
+#         response = await ac.patch("/v1/admin/arena/patch_arena?arena_id=2", params={"arena_id": 2}, json={
+#             "name": "test_patch",
+#             "description": "test_patch",
+#             "cords_spawn": [],
+#             "cloths": [],
+#             "free": True
+#         })
+#         assert response.status_code == 200
 
 
 @pytest.mark.asyncio

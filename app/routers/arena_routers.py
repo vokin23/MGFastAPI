@@ -9,7 +9,7 @@ from app.models.datebase import async_session_maker
 from app.models.player_model import Player, Fraction
 from app.schemas.arena_schemas import ArenaCreateSchema, ArenaBaseSchema, MSGArenaSchema, \
     ArenaRegPlayerSchema, MatchReturnSchema, ArenaDeleteRegPlayerSchema, DeleteRegArenaSchema, StatsArePdaSchema, \
-    PlayerInTopSchema, OpenArenaMenuSchema
+    PlayerInTopSchema, OpenArenaMenuSchema, ActionReturnSchema
 from app.service.arena_service import ArenaService, CustomJSONEncoder
 from app.service.base_service import get_moscow_time
 
@@ -89,7 +89,7 @@ async def delete_arena(arena_id: int = Query(description='ID Арены')) -> Ar
 
 
 @arena_router.post("/register_arena", summary="Регистрация на Арену")
-async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSchema, MSGArenaSchema]]:
+async def register_arena(data: ArenaRegPlayerSchema) -> ActionReturnSchema:
     async with async_session_maker() as session:
         items = data.items
         cords = [data.position, data.orientation]
@@ -109,7 +109,8 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
         player_match_stmt = await session.execute(player_match_obj)
         player_match = player_match_stmt.scalar()
         if player_match:
-            return [MSGArenaSchema(steam_id=player.steam_id, msg="Вы уже зарегистрированы на арену")]
+            return ActionReturnSchema(game_data=None, message_data=[MSGArenaSchema(steam_id=player.steam_id,
+                                                                                   msg="Вы уже стоите на арене")])
 
         free_matches_obj = select(Match).where(Match.player2 == None, Match.start == False)
         free_matches_stmt = await session.execute(free_matches_obj)
@@ -139,11 +140,14 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
                     steam_id_player1_stmt = await session.execute(steam_id_player1_obj)
                     steam_id_player1 = steam_id_player1_stmt.scalar().steam_id
                     steam_id_player2 = player.steam_id
-                    return [MatchReturnSchema(cords_spawn=arena.cords_spawn,
-                                              player1=steam_id_player1,
-                                              player2=steam_id_player2,
-                                              cloths1=match.arena_set,
-                                              cloths2=match.arena_set)]
+                    return ActionReturnSchema(game_data=[MatchReturnSchema(cords_spawn1=arena.cords_spawn[0],
+                                                                           cords_spawn2=arena.cords_spawn[1],
+                                                                           player1=steam_id_player1,
+                                                                           player2=steam_id_player2,
+                                                                           cloths1=match.old_things_player1,
+                                                                           cloths2=match.old_things_player2)],
+                                              message_data=[MSGArenaSchema(steam_id=player.steam_id,
+                                                                           msg="Вы успешно зарегистрированы на арену")])
                 else:
                     arena_queue.append(match.id)
                     new_match_list = []
@@ -167,7 +171,8 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
                         steam_id_player2_stmt = await session.execute(steam_id_player2_obj)
                         steam_id_player2 = steam_id_player2_stmt.scalar().steam_id
 
-                        new_match_list.append(MatchReturnSchema(cords_spawn=free_arena.cords_spawn,
+                        new_match_list.append(MatchReturnSchema(cords_spawn1=free_arena.cords_spawn[0],
+                                                                cords_spawn2=free_arena.cords_spawn[1],
                                                                 player1=steam_id_player1,
                                                                 player2=steam_id_player2,
                                                                 cloths1=new_match.arena_set,
@@ -175,19 +180,23 @@ async def register_arena(data: ArenaRegPlayerSchema) -> List[Union[MatchReturnSc
                         await session.commit()
                     arena_queue_cache = json.dumps(arena_queue)
                     await redis_manager.set("arena_queue", arena_queue_cache)
-                    return new_match_list
+                    return ActionReturnSchema(game_data=new_match_list,
+                                              message_data=[MSGArenaSchema(steam_id=player.steam_id,
+                                                                           msg="Вы успешно зарегистрированы на арену")])
 
             else:
                 arena_queue.append(match.id)
                 arena_queue_cache = json.dumps(arena_queue)
                 await redis_manager.set("arena_queue", arena_queue_cache)
                 await session.commit()
-                return [MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно зарегистрированы на арену")]
+                return ActionReturnSchema(game_data=None, message_data=[MSGArenaSchema(steam_id=player.steam_id,
+                                                                                        msg="Вы успешно зарегистрированы на арену")])
         else:
             await session.execute(
                 insert(Match).values(player1=player.id, old_things_player1=items, old_cords_player1=cords))
             await session.commit()
-            return [MSGArenaSchema(steam_id=player.steam_id, msg="Вы успешно зарегистрированы на арену")]
+            return ActionReturnSchema(game_data=None, message_data=[MSGArenaSchema(steam_id=player.steam_id,
+                                                                                    msg="Вы успешно зарегистрированы на арену")])
 
 
 @arena_router.post("/delete_register_arena", summary="Удаление регистрации на Арену")
@@ -231,7 +240,6 @@ async def delete_register_arena(data: DeleteRegArenaSchema) -> MSGArenaSchema:
             return MSGArenaSchema(steam_id=player.steam_id, msg="Вы не стоите в очереди")
 
 
-# @arena_router.post("/update_arena_match", summary="Обновить\завершить матч")
 async def update_arena_match(session, player1, player2) -> List[MatchReturnSchema]:
     return_list = []
     match_obj = select(Match).where(
@@ -258,7 +266,8 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
         )
         await session.commit()
         return_list.append(MatchReturnSchema(
-            cords_spawn=[match.old_cords_player1, match.old_cords_player2],
+            cords_spawn1={"position": match.old_cords_player1[0], "orientation": match.old_cords_player1[1]},
+            cords_spawn2={"position": match.old_cords_player2[0], "orientation": match.old_cords_player2[1]},
             player1=player1.steam_id,
             player2=player2.steam_id,
             cloths1=match.old_things_player1,
@@ -283,7 +292,8 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
             new_player2_stmt = await session.execute(new_player2_obj)
             new_player2 = new_player2_stmt.scalar()
             return_list.append(MatchReturnSchema(
-                cords_spawn=[new_match.old_cords_player1, new_match.old_cords_player2],
+                cords_spawn1={"position": new_match.old_cords_player1[0], "orientation": new_match.old_cords_player1[1]},
+                cords_spawn2={"position": new_match.old_cords_player2[0], "orientation": new_match.old_cords_player2[1]},
                 player1=new_player1.steam_id,
                 player2=new_player2.steam_id,
                 cloths1=new_match.old_things_player1,
@@ -362,7 +372,7 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
         player_stmt = await session.execute(player_obj)
         player = player_stmt.scalar()
         active_player_match_obj = select(Match).where(or_(Match.player1 == player.id, Match.player2 == player.id),
-                                                        Match.finished == False, Match.start == True)
+                                                      Match.finished == False, Match.start == True)
         active_player_match_stmt = await session.execute(active_player_match_obj)
         active_player_match = active_player_match_stmt.scalar()
         if active_player_match:

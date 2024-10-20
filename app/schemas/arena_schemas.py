@@ -31,17 +31,18 @@ class ArenaDeleteRegPlayerSchema(BaseModel):
     steam_id: str
 
 
-# class CordsSpawnSchema(BaseModel):
-#     position: List[str]
-#     orientation: List[str]
-
-
 class MatchReturnSchema(BaseModel):
-    cords_spawn: list
+    cords_spawn1: dict
+    cords_spawn2: dict
     cloths1: List[dict]
     player1: str
     cloths2: List[dict]
     player2: str
+
+
+class ActionReturnSchema(BaseModel):
+    game_data: List[MatchReturnSchema] | None
+    message_data: List[MSGArenaSchema] | None
 
 
 class DeleteRegArenaSchema(BaseModel):
