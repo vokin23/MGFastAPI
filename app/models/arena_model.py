@@ -14,6 +14,7 @@ class Arena(Base):
     cords_spawn: Mapped[JSON] = mapped_column(JSON, nullable=True, default=None)
     cloths: Mapped[JSON] = mapped_column(JSON, nullable=True, default=None)
     free: Mapped[bool] = mapped_column(default=True)
+    arena_price: Mapped[int] = mapped_column(default=5000)
 
 
 class Match(Base):

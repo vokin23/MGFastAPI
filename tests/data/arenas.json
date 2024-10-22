@@ -4,23 +4,48 @@
     "description": "The first arena",
     "cords_spawn": [
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       },
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       }
     ],
     "cloths": [
       {
-        "789": "11"
-      },
-      {
-        "456": "22"
-      },
-      {
-        "123": "33"
+        "items": [
+          "string"
+        ],
+        "equipment": [
+          "string"
+        ],
+        "guns": [
+          {
+            "classname": "string",
+            "mag_classname": "string",
+            "mag_count": 0,
+            "attachments": [
+              "string"
+            ]
+          }
+        ]
       }
     ],
     "free": true
@@ -30,23 +55,48 @@
     "description": "The second arena",
     "cords_spawn": [
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       },
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       }
     ],
     "cloths": [
       {
-        "789": "11"
-      },
-      {
-        "456": "22"
-      },
-      {
-        "123": "33"
+        "items": [
+          "string"
+        ],
+        "equipment": [
+          "string"
+        ],
+        "guns": [
+          {
+            "classname": "string",
+            "mag_classname": "string",
+            "mag_count": 0,
+            "attachments": [
+              "string"
+            ]
+          }
+        ]
       }
     ],
     "free": false
@@ -56,23 +106,48 @@
     "description": "The third arena",
     "cords_spawn": [
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       },
       {
-        "position": ["1", "1", "1"],
-        "orientation": ["1", "1", "1"]
+        "position": [
+          "1",
+          "1",
+          "1"
+        ],
+        "orientation": [
+          "1",
+          "1",
+          "1"
+        ]
       }
     ],
     "cloths": [
       {
-        "789": "11"
-      },
-      {
-        "456": "22"
-      },
-      {
-        "123": "33"
+        "items": [
+          "string"
+        ],
+        "equipment": [
+          "string"
+        ],
+        "guns": [
+          {
+            "classname": "string",
+            "mag_classname": "string",
+            "mag_count": 0,
+            "attachments": [
+              "string"
+            ]
+          }
+        ]
       }
     ],
     "free": true

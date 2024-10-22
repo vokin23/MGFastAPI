@@ -8,11 +8,24 @@ class MSGArenaSchema(BaseModel):
     msg: str
 
 
+class ArenaGunsSchema(BaseModel):
+    classname: str
+    mag_classname: str
+    mag_count: int
+    attachments: List[str]
+
+
+class ArenaClothsSchema(BaseModel):
+    items: List[str]
+    equipment: List[str]
+    guns: List[ArenaGunsSchema]
+
+
 class ArenaCreateSchema(BaseModel):
     name: str
     description: str
     cords_spawn: List[dict]
-    cloths: List[dict]
+    cloths: List[ArenaClothsSchema]
     free: bool
 
 
@@ -23,8 +36,8 @@ class ArenaBaseSchema(ArenaCreateSchema):
 class ArenaRegPlayerSchema(BaseModel):
     steam_id: str
     items: List[dict]
-    position: List[str]
-    orientation: List[str]
+    position: str
+    orientation: str
 
 
 class ArenaDeleteRegPlayerSchema(BaseModel):
@@ -103,3 +116,4 @@ class OpenArenaMenuSchema(BaseModel):
     queue_position: int | None
     players: List[PlayerInArenaQueueSchema] | None
     description: str | None
+    arena_price: int | None

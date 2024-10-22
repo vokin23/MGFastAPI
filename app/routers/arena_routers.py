@@ -92,7 +92,10 @@ async def delete_arena(arena_id: int = Query(description='ID Арены')) -> Ar
 async def register_arena(data: ArenaRegPlayerSchema) -> ActionReturnSchema:
     async with async_session_maker() as session:
         items = data.items
-        cords = [data.position, data.orientation]
+        cords = {
+            "position": data.position,
+            "orientation": data.orientation
+        }
         player_obj = select(Player).where(Player.steam_id == data.steam_id)
         player_stmt = await session.execute(player_obj)
         player = player_stmt.scalar()
@@ -209,6 +212,9 @@ async def delete_register_arena(data: DeleteRegArenaSchema) -> MSGArenaSchema:
         if not player:
             raise HTTPException(status_code=404, detail="Игрок не найден")
 
+        if player.game_balance < 0:
+            raise HTTPException(status_code=400, detail="Недостаточно денег")
+
         player_match_obj = select(Match).where(or_(Match.player1 == player.id, Match.player2 == player.id),
                                                Match.finished == False, Match.start == False)
         player_match_stmt = await session.execute(player_match_obj)
@@ -264,10 +270,12 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
         player1.arena_rating, player2.arena_rating = ArenaService.calculate_new_ratings(
             player1.arena_rating, player2.arena_rating, 1
         )
+        player1.game_balance += int(match_arena.arena_price * 1.5)
+        player2.game_balance -= match_arena.arena_price
         await session.commit()
         return_list.append(MatchReturnSchema(
-            cords_spawn1={"position": match.old_cords_player1[0], "orientation": match.old_cords_player1[1]},
-            cords_spawn2={"position": match.old_cords_player2[0], "orientation": match.old_cords_player2[1]},
+            cords_spawn1=match.old_cords_player1,
+            cords_spawn2=match.old_cords_player2,
             player1=player1.steam_id,
             player2=player2.steam_id,
             cloths1=match.old_things_player1,
@@ -292,8 +300,8 @@ async def update_arena_match(session, player1, player2) -> List[MatchReturnSchem
             new_player2_stmt = await session.execute(new_player2_obj)
             new_player2 = new_player2_stmt.scalar()
             return_list.append(MatchReturnSchema(
-                cords_spawn1={"position": new_match.old_cords_player1[0], "orientation": new_match.old_cords_player1[1]},
-                cords_spawn2={"position": new_match.old_cords_player2[0], "orientation": new_match.old_cords_player2[1]},
+                cords_spawn1=new_match.old_cords_player1,
+                cords_spawn2=new_match.old_cords_player2,
                 player1=new_player1.steam_id,
                 player2=new_player2.steam_id,
                 cloths1=new_match.old_things_player1,
@@ -434,10 +442,14 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
             players = None
             description = "Вы не зарегистрированы на арену"
 
+        arena_price_obj = select(Arena).where(Arena.free == True)
+        arena_price_stmt = await session.execute(arena_price_obj)
+        arena_price = arena_price_stmt.scalar().arena_price if arena_price_stmt.scalar() else (await session.execute(select(Arena))).scalars().all()[0].arena_price
         return OpenArenaMenuSchema(
             steam_id=player.steam_id,
             registration_required=registration_required,
             queue_position=queue_position,
             players=players,
-            description=description
+            description=description,
+            arena_price=arena_price
         )

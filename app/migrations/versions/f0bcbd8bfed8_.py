@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 062bfd22eb6c
+Revision ID: f0bcbd8bfed8
 Revises: 
-Create Date: 2024-10-11 00:38:28.109685
+Create Date: 2024-10-22 19:24:02.187384
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '062bfd22eb6c'
+revision: str = 'f0bcbd8bfed8'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,6 +34,7 @@ def upgrade() -> None:
     sa.Column('cords_spawn', sa.JSON(), nullable=True),
     sa.Column('cloths', sa.JSON(), nullable=True),
     sa.Column('free', sa.Boolean(), nullable=False),
+    sa.Column('arena_price', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('award_api',
