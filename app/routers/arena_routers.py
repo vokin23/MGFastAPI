@@ -384,28 +384,18 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
         active_player_match_stmt = await session.execute(active_player_match_obj)
         active_player_match = active_player_match_stmt.scalar()
         if active_player_match:
-            raise HTTPException(status_code=400, detail="Игрок уже на арене")
-        if not player:
-            raise HTTPException(status_code=404, detail="Игрок не найден")
-
-        player_mathc = select(Match).where(and_(or_(Match.player1 == player.id, Match.player2 == player.id),
-                                                Match.finished == False, Match.start == False))
-        player_match_stmt = await session.execute(player_mathc)
-        player_match = player_match_stmt.scalar()
-
-        if player_match:
             registration_required = False
-            if player_match.player1 and player_match.player2:
+            if active_player_match.player1 and active_player_match.player2:
                 description = None
                 arena_queue_cache = await redis_manager.get("arena_queue")
                 arena_queue = json.loads(arena_queue_cache) if arena_queue_cache else []
-                if player_match.id in arena_queue:
-                    queue_position = arena_queue.index(player_match.id) + 1
+                if active_player_match.id in arena_queue:
+                    queue_position = arena_queue.index(active_player_match.id) + 1
                 else:
                     queue_position = None
 
-                if player.id == player_match.player1:
-                    player2_obj = select(Player).where(Player.id == player_match.player2)
+                if player.id == active_player_match.player1:
+                    player2_obj = select(Player).where(Player.id == active_player_match.player2)
                     player2_stmt = await session.execute(player2_obj)
                     player2 = player2_stmt.scalar()
                     players = [
@@ -419,7 +409,7 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
                         }
                     ]
                 else:
-                    player1_obj = select(Player).where(Player.id == player_match.player1)
+                    player1_obj = select(Player).where(Player.id == active_player_match.player1)
                     player1_stmt = await session.execute(player1_obj)
                     player1 = player1_stmt.scalar()
                     players = [
@@ -444,7 +434,13 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
 
         arena_price_obj = select(Arena).where(Arena.free == True)
         arena_price_stmt = await session.execute(arena_price_obj)
-        arena_price = arena_price_stmt.scalar().arena_price if arena_price_stmt.scalar() else (await session.execute(select(Arena))).scalars().all()[0].arena_price
+        arena_price_instance = arena_price_stmt.scalar()
+        if arena_price_instance:
+            arena_price = arena_price_instance.arena_price
+        else:
+            all_arenas = (await session.execute(select(Arena))).scalars().all()
+            arena_price = all_arenas[0].arena_price if all_arenas else 0
+
         return OpenArenaMenuSchema(
             steam_id=player.steam_id,
             registration_required=registration_required,
