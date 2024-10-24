@@ -380,7 +380,7 @@ async def open_arena_menu(steam_id: str = Query(description='Steam ID игрок
         player_stmt = await session.execute(player_obj)
         player = player_stmt.scalar()
         active_player_match_obj = select(Match).where(or_(Match.player1 == player.id, Match.player2 == player.id),
-                                                      Match.finished == False, Match.start == True)
+                                                      Match.finished == False)
         active_player_match_stmt = await session.execute(active_player_match_obj)
         active_player_match = active_player_match_stmt.scalar()
         if active_player_match:
