@@ -35,7 +35,7 @@ class ArenaBaseSchema(ArenaCreateSchema):
 
 class ArenaRegPlayerSchema(BaseModel):
     steam_id: str
-    items: List[dict]
+    items: dict
     position: str
     orientation: str
 
